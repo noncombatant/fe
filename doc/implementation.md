@@ -82,42 +82,6 @@ Environments are stored as association lists, for example: an environment with
 the symbol `x` bound to `10` and `y` bound to `20` would be `((x . 10) (y .
 20))`. Globally bound values are stored directly in the `symbol` object.
 
-## Macros
-
-Macros work similar to functions, but receive their arguments unevaluated and
-return code which is evaluated in the scope of the caller. The first time a
-macro is called the code which called it is replaced by the generated code, such
-that the macro itself is only ran once in each place it is called. For example,
-we could define the following macro to increment a value by one:
-
-```clojure
-(= incr
-  (mac (sym)
-    (list '= sym (list '+ sym 1))))
-```
-
-And use it in the following while loop:
-
-```clojure
-(= i 0)
-(while (< i 0)
-  (print i)
-  (incr i))
-```
-
-Upon the first call to `incr`, the program code would be modified in-place,
-replacing the call to the macro with the code it generated:
-
-```clojure
-(= i 0)
-(while (< i 0)
-  (print i)
-  (= i (+ i 1)))
-```
-
-Subsequent iterations of the loop would run the new code which now exists where
-the macro call was originally.
-
 ## Garbage Collection
 
 `fe` uses a simple mark-and-sweep garbage collector in conjunction with a

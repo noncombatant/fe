@@ -4,19 +4,20 @@
 
 ### Special forms
 
-#### `(let sym val)`
+#### `(let symbol value)`
 
-Creates a new binding of `sym` to the value `val` in the current environment.
+Creates a new binding of `symbol` to the value `value` in the current environment.
 
-#### `(= sym val)`
+#### `(= symbol value)`
 
-Sets the existing binding of `sym` to the value `val`; in lieu of an existing
-binding the global value is set.
+Sets the existing binding of `symbol` to the value `value`; in lieu of an
+existing binding the global value is set.
 
-#### `(if cond then else ...)`
+#### `(if condition then else ...)`
 
-If `cond` is true evaluates `then`, else evaluates `else` — `else` and `then`
-statements can be chained to replicate the functionality of `else if` blocks.
+If `condition` is true evaluates `then`, else evaluates `else`. `else` and
+`then` statements can be chained to replicate the functionality of `else if`
+blocks.
 
 ```clojure
 > (= x 2)
@@ -28,7 +29,7 @@ nil
 two
 ```
 
-#### `(fn params ...)`
+#### `(fn arguments ...)`
 
 Creates a new function.
 
@@ -39,25 +40,21 @@ nil
 16
 ```
 
-#### `(mac params ...)`
+#### `(mac arguments ...)`
 
-Creates a new *macro*.
+Creates a new macro.
 
-```clojure
-> (= incr (mac (x) (list '= x (list '+ x 1))))
-nil
-> (= n 0)
-nil
-> (incr n)
-nil
-> n
-1
-```
+Macros work similar to functions, but receive their arguments unevaluated and
+return code which is evaluated in the scope of the caller. The first time a
+macro is called the call site is replaced by the generated code, such that the
+macro itself is only run once in each call site.
 
-#### `(while cond ...)`
+For examples, see [macros.fe](../scripts/macros.fe).
 
-If `cond` evaluates to true evaluates the rest of its arguments and keeps
-repeating until `cond` evaluates to `nil`.
+#### `(while condition ...)`
+
+If `condition` evaluates to true evaluates the rest of its arguments and keeps
+repeating until `condition` evaluates to `nil`.
 
 ```clojure
 > (= i 0)
