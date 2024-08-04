@@ -10,8 +10,6 @@
 
 #define FE_VERSION "1.0"
 
-#define unused(x) ((void)(x))
-
 typedef float FeNumber;  // TODO use double
 typedef struct FeObject FeObject;
 typedef struct FeContext FeContext;

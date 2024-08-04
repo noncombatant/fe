@@ -130,13 +130,11 @@ static FeObject* checktype(FeContext* ctx, FeObject* obj, int type) {
   return obj;
 }
 
-int fe_type(FeContext* ctx, FeObject* obj) {
-  unused(ctx);
+int fe_type(FeContext*, FeObject* obj) {
   return type(obj);
 }
 
-int fe_isnil(FeContext* ctx, FeObject* obj) {
-  unused(ctx);
+int fe_isnil(FeContext*, FeObject* obj) {
   return isnil(obj);
 }
 
@@ -425,8 +423,7 @@ void fe_write(FeContext* ctx,
   }
 }
 
-static void writefp(FeContext* ctx, void* udata, char chr) {
-  unused(ctx);
+static void writefp(FeContext*, void* udata, char chr) {
   fputc(chr, udata);
 }
 
@@ -439,9 +436,8 @@ typedef struct {
   int n;
 } CharPtrInt;
 
-static void writebuf(FeContext* ctx, void* udata, char chr) {
+static void writebuf(FeContext*, void* udata, char chr) {
   CharPtrInt* x = udata;
-  unused(ctx);
   if (x->n) {
     *x->p++ = chr;
     x->n--;
@@ -477,8 +473,7 @@ static FeObject* getbound(FeObject* sym, FeObject* env) {
   return cdr(sym);
 }
 
-void fe_set(FeContext* ctx, FeObject* sym, FeObject* v) {
-  unused(ctx);
+void fe_set(FeContext*, FeObject* sym, FeObject* v) {
   cdr(getbound(sym, &nil)) = v;
 }
 
