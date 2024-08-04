@@ -10,7 +10,7 @@
 
 #define FE_VERSION "1.0"
 
-typedef float FeNumber;  // TODO use double
+typedef double FeNumber;
 typedef struct FeObject FeObject;
 typedef struct FeContext FeContext;
 typedef FeObject* FeCFunc(FeContext* ctx, FeObject* args);
