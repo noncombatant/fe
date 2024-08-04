@@ -138,7 +138,7 @@ int FeGetType(FeContext*, FeObject* obj) {
   return type(obj);
 }
 
-int FeIsNil(FeContext*, FeObject* obj) {
+bool FeIsNil(FeContext*, FeObject* obj) {
   return isnil(obj);
 }
 

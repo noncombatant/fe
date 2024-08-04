@@ -47,7 +47,7 @@ void FeHandleError(FeContext* ctx, const char* msg);
 FeObject* FeGetNextArgument(FeContext* ctx, FeObject** arg);
 
 int FeGetType(FeContext* ctx, FeObject* obj);  // TODO enum return
-int FeIsNil(FeContext* ctx, FeObject* obj);    // TODO bool
+bool FeIsNil(FeContext* ctx, FeObject* obj);
 
 void FePushGC(FeContext* ctx, FeObject* obj);
 void FeRestoreGC(FeContext* ctx, size_t idx);
