@@ -406,7 +406,7 @@ void FeWrite(FeContext* ctx, FeObject* obj, FeWriteFn fn, void* udata, int qt) {
 
     case FE_TPAIR:
       fn(ctx, udata, '(');
-      for (;;) {
+      while (true) {
         FeWrite(ctx, CAR(obj), fn, udata, 1);
         obj = CDR(obj);
         if (TYPE(obj) != FE_TPAIR) {
