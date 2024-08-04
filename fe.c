@@ -185,14 +185,14 @@ begin:
 }
 
 static void CollectGarbage(FeContext* ctx) {
-  size_t i;
-  /* mark */
-  for (i = 0; i < ctx->gc_stack_index; i++) {
+  // Mark:
+  for (size_t i = 0; i < ctx->gc_stack_index; i++) {
     FeMark(ctx, ctx->gcstack[i]);
   }
   FeMark(ctx, ctx->symbol_list);
-  /* sweep and unmark */
-  for (i = 0; i < ctx->object_count; i++) {
+
+  // Sweep and unmark:
+  for (size_t i = 0; i < ctx->object_count; i++) {
     FeObject* obj = &ctx->objects[i];
     if (TYPE(obj) == FE_TFREE) {
       continue;
@@ -273,16 +273,15 @@ static int IsStringEqual(FeObject* obj, const char* str) {
 }
 
 static FeObject* MakeObject(FeContext* ctx) {
-  FeObject* obj;
-  /* do gc if free_list has no more objects */
+  // Run GC if free_list has no more objects:
   if (IS_NIL(ctx->free_list)) {
     CollectGarbage(ctx);
     if (IS_NIL(ctx->free_list)) {
       FeHandleError(ctx, "out of memory");
     }
   }
-  /* get object from free_list and push to the gcstack */
-  obj = ctx->free_list;
+  // Get object from free_list and push it onto the GC stack:
+  FeObject* obj = ctx->free_list;
   ctx->free_list = CDR(obj);
   FePushGC(ctx, obj);
   return obj;
@@ -392,14 +391,13 @@ static void WriteString(FeContext* ctx,
 
 void FeWrite(FeContext* ctx, FeObject* obj, FeWriteFn fn, void* udata, int qt) {
   char buf[32];
-
   switch (TYPE(obj)) {
     case FE_TNIL:
       WriteString(ctx, fn, udata, "nil");
       break;
 
     case FE_TNUMBER:
-      sprintf(buf, "%.7g", NUMBER(obj));
+      snprintf(buf, sizeof(buf), "%.7g", NUMBER(obj));
       WriteString(ctx, fn, udata, buf);
       break;
 
@@ -444,7 +442,7 @@ void FeWrite(FeContext* ctx, FeObject* obj, FeWriteFn fn, void* udata, int qt) {
       break;
 
     default:
-      sprintf(buf, "[%s %p]", type_names[TYPE(obj)], (void*)obj);
+      snprintf(buf, sizeof(buf), "[%s %p]", type_names[TYPE(obj)], (void*)obj);
       WriteString(ctx, fn, udata, buf);
       break;
   }
@@ -473,9 +471,7 @@ static void WriteBuffer(FeContext*, void* udata, char chr) {
 }
 
 size_t FeToString(FeContext* ctx, FeObject* obj, char* dst, size_t size) {
-  CharPtrInt x;
-  x.p = dst;
-  x.n = size - 1;
+  CharPtrInt x = {.p = dst, .n = size - 1};
   FeWrite(ctx, obj, WriteBuffer, &x, 0);
   *x.p = '\0';
   return size - x.n - 1;
@@ -490,14 +486,14 @@ void* FeToPtr(FeContext* ctx, FeObject* obj) {
 }
 
 static FeObject* GetBound(FeObject* sym, FeObject* env) {
-  /* try to find in environment */
+  // Try to find the symbol in the environment:
   for (; !IS_NIL(env); env = CDR(env)) {
     FeObject* x = CAR(env);
     if (CAR(x) == sym) {
       return x;
     }
   }
-  /* return global */
+  // Otherwise, return a global value:
   return CDR(sym);
 }
 
