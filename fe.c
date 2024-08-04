@@ -689,10 +689,6 @@ static FeObject* Evaluate(FeContext* ctx,
                           FeObject* obj,
                           FeObject* env,
                           FeObject** newenv) {
-  FeObject *fn, *arg, *res;
-  FeObject cl, *va, *vb;
-  size_t n, gc;
-
   if (TYPE(obj) == FE_TSYMBOL) {
     return CDR(GetBound(obj, env));
   }
@@ -700,14 +696,17 @@ static FeObject* Evaluate(FeContext* ctx,
     return obj;
   }
 
+  FeObject cl;
   CAR(&cl) = obj;
   CDR(&cl) = ctx->call_list;
   ctx->call_list = &cl;
 
-  gc = FeSaveGC(ctx);
-  fn = Evaluate(ctx, CAR(obj), env, NULL);
-  arg = CDR(obj);
-  res = &nil;
+  size_t gc = FeSaveGC(ctx);
+  FeObject* fn = Evaluate(ctx, CAR(obj), env, NULL);
+  FeObject* arg = CDR(obj);
+  FeObject* res = &nil;
+  FeObject* va;
+  FeObject* vb;
 
   switch (TYPE(fn)) {
     case FE_TPRIM:
@@ -747,14 +746,15 @@ static FeObject* Evaluate(FeContext* ctx,
           CDR(res) = va;
           break;
 
-        case P_WHILE:
+        case P_WHILE: {
           va = FeGetNextArgument(ctx, &arg);
-          n = FeSaveGC(ctx);
+          size_t n = FeSaveGC(ctx);
           while (!IS_NIL(Evaluate(ctx, va, env, NULL))) {
             DoList(ctx, arg, env);
             FeRestoreGC(ctx, n);
           }
           break;
+        }
 
         case P_QUOTE:
           res = FeGetNextArgument(ctx, &arg);
