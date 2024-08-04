@@ -5,27 +5,55 @@
 #include <setjmp.h>
 #include <stdbool.h>
 #include <stdio.h>
+#include <stdlib.h>
 #include <stdnoreturn.h>
 #include <unistd.h>
 
 #include "fe.h"
 
 static jmp_buf top_level;
-// TODO: Make this a command line option.
-static char arena[64000];
 
 static void noreturn onerror(FeContext*, const char* message, FeObject*) {
   fprintf(stderr, "error: %s\n", message);
   longjmp(top_level, -1);
 }
 
-int main(int count, char* arguments[]) {
-  FeContext* ctx = fe_open(arena, sizeof(arena));
+static void noreturn PrintHelp(int status) {
+  // TODO
+  exit(status);
+}
 
-  /* init input file */
+int main(int count, char* arguments[]) {
+  size_t arena_size = 64 * 1024;
+  while (true) {
+    int ch = getopt(count, arguments, "hs:");
+    if (ch == -1) {
+      break;
+    }
+    switch (ch) {
+      case 'h':
+        PrintHelp(EXIT_SUCCESS);
+      case 's': {
+        char* end = NULL;
+        arena_size = strtoul(optarg, &end, 0);
+        if (end == optarg) {
+          PrintHelp(EXIT_FAILURE);
+        }
+        break;
+      }
+      default:
+        PrintHelp(EXIT_FAILURE);
+    }
+  }
+  count -= optind;
+  arguments += optind;
+
+  char* arena = malloc(arena_size);
+  FeContext* ctx = fe_open(arena, arena_size);
+
   FILE* input = stdin;
-  if (count > 1) {
-    input = fopen(arguments[1], "rb");
+  if (count > 0) {
+    input = fopen(arguments[0], "rb");
     if (!input) {
       fe_error(ctx, "could not open input file");
     }
@@ -53,4 +81,5 @@ int main(int count, char* arguments[]) {
       printf("\n");
     }
   }
+  free(arena);
 }
