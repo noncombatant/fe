@@ -1,9 +1,6 @@
-/*
-** Copyright (c) 2020 rxi
-**
-** This library is free software; you can redistribute it and/or modify it
-** under the terms of the MIT license. See `fe.c` for details.
-*/
+// Copyright 2020 rxi, https://github.com/rxi/fe
+// Copyright 2022 Chris Palmer, https://noncombatant.org/
+// SPDX-License-Identifier: MIT
 
 #ifndef FE_H
 #define FE_H

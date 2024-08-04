@@ -1,3 +1,7 @@
+// Copyright 2020 rxi, https://github.com/rxi/fe
+// Copyright 2022 Chris Palmer, https://noncombatant.org/
+// SPDX-License-Identifier: MIT
+
 #include <setjmp.h>
 #include <stdio.h>
 #include <unistd.h>
