@@ -71,10 +71,7 @@ void FeWriteFile(FeContext* ctx, FeObject* obj, FILE* fp);
 FeObject* FeRead(FeContext* ctx, FeReadFn fn, void* udata);
 FeObject* FeReadFile(FeContext* ctx, FILE* fp);
 
-int FeToString(FeContext* ctx,
-               FeObject* obj,
-               char* dst,
-               int size);  // TODO size_t
+size_t FeToString(FeContext* ctx, FeObject* obj, char* dst, size_t size);
 FeNumber FeToNumber(FeContext* ctx, FeObject* obj);
 void* FeToPtr(FeContext* ctx, FeObject* obj);
 void FeSet(FeContext* ctx, FeObject* sym, FeObject* v);

@@ -459,7 +459,7 @@ void FeWriteFile(FeContext* ctx, FeObject* obj, FILE* fp) {
 
 typedef struct {
   char* p;
-  int n;
+  size_t n;
 } CharPtrInt;
 
 static void writebuf(FeContext*, void* udata, char chr) {
@@ -470,7 +470,7 @@ static void writebuf(FeContext*, void* udata, char chr) {
   }
 }
 
-int FeToString(FeContext* ctx, FeObject* obj, char* dst, int size) {
+size_t FeToString(FeContext* ctx, FeObject* obj, char* dst, size_t size) {
   CharPtrInt x;
   x.p = dst;
   x.n = size - 1;
