@@ -3,52 +3,52 @@
 // SPDX-License-Identifier: MIT
 
 #include <setjmp.h>
+#include <stdbool.h>
 #include <stdio.h>
 #include <stdnoreturn.h>
 #include <unistd.h>
 
 #include "fe.h"
 
-static jmp_buf toplevel;
+static jmp_buf top_level;
 // TODO: Make this a command line option.
 static char arena[64000];
 
 static void noreturn onerror(fe_Context*, const char* message, fe_Object*) {
   fprintf(stderr, "error: %s\n", message);
-  longjmp(toplevel, -1);
+  longjmp(top_level, -1);
 }
 
 int main(int count, char* arguments[]) {
-  size_t gc;
-  fe_Object* obj;
-  FILE* fp = stdin;
   fe_Context* ctx = fe_open(arena, sizeof(arena));
 
   /* init input file */
+  FILE* input = stdin;
   if (count > 1) {
-    fp = fopen(arguments[1], "rb");
-    if (!fp) {
+    input = fopen(arguments[1], "rb");
+    if (!input) {
       fe_error(ctx, "could not open input file");
     }
   }
 
-  if (fp == stdin) {
+  if (input == stdin) {
     fe_handlers(ctx)->error = onerror;
   }
-  gc = fe_savegc(ctx);
-  setjmp(toplevel);
+  size_t gc = fe_savegc(ctx);
+  setjmp(top_level);
 
   /* re(p)l */
-  for (;;) {
+  while (true) {
     fe_restoregc(ctx, gc);
-    if (fp == stdin) {
+    if (input == stdin) {
       printf("fe > ");
     }
-    if (!(obj = fe_readfp(ctx, fp))) {
+    fe_Object* obj = fe_readfp(ctx, input);
+    if (obj == NULL) {
       break;
     }
     obj = fe_eval(ctx, obj);
-    if (fp == stdin) {
+    if (input == stdin) {
       fe_writefp(ctx, obj, stdout);
       printf("\n");
     }
