@@ -669,21 +669,21 @@ static FeObject* ArgsToEnv(FeContext* ctx,
   return env;
 }
 
-#define evalarg() Evaluate(ctx, FeGetNextArgument(ctx, &arg), env, NULL)
+#define EVAL_ARG() Evaluate(ctx, FeGetNextArgument(ctx, &arg), env, NULL)
 
-#define arithop(op)                          \
-  {                                          \
-    FeNumber x = FeToNumber(ctx, evalarg()); \
-    while (!IS_NIL(arg)) {                   \
-      x = x op FeToNumber(ctx, evalarg());   \
-    }                                        \
-    res = FeMakeNumber(ctx, x);              \
+#define ARITH_OP(op)                          \
+  {                                           \
+    FeNumber x = FeToNumber(ctx, EVAL_ARG()); \
+    while (!IS_NIL(arg)) {                    \
+      x = x op FeToNumber(ctx, EVAL_ARG());   \
+    }                                         \
+    res = FeMakeNumber(ctx, x);               \
   }
 
-#define numcmpop(op)                                 \
+#define NUM_CMP_OP(op)                               \
   {                                                  \
-    va = CheckType(ctx, evalarg(), FE_TNUMBER);      \
-    vb = CheckType(ctx, evalarg(), FE_TNUMBER);      \
+    va = CheckType(ctx, EVAL_ARG(), FE_TNUMBER);     \
+    vb = CheckType(ctx, EVAL_ARG(), FE_TNUMBER);     \
     res = FeMakeBool(ctx, NUMBER(va) op NUMBER(vb)); \
   }
 
@@ -717,20 +717,20 @@ static FeObject* Evaluate(FeContext* ctx,
         case P_LET:
           va = CheckType(ctx, FeGetNextArgument(ctx, &arg), FE_TSYMBOL);
           if (newenv) {
-            *newenv = FeCons(ctx, FeCons(ctx, va, evalarg()), env);
+            *newenv = FeCons(ctx, FeCons(ctx, va, EVAL_ARG()), env);
           }
           break;
 
         case P_SET:
           va = CheckType(ctx, FeGetNextArgument(ctx, &arg), FE_TSYMBOL);
-          CDR(GetBound(va, env)) = evalarg();
+          CDR(GetBound(va, env)) = EVAL_ARG();
           break;
 
         case P_IF:
           while (!IS_NIL(arg)) {
-            va = evalarg();
+            va = EVAL_ARG();
             if (!IS_NIL(va)) {
-              res = IS_NIL(arg) ? va : evalarg();
+              res = IS_NIL(arg) ? va : EVAL_ARG();
               break;
             }
             if (IS_NIL(arg)) {
@@ -763,12 +763,12 @@ static FeObject* Evaluate(FeContext* ctx,
           break;
 
         case P_AND:
-          while (!IS_NIL(arg) && !IS_NIL(res = evalarg()))
+          while (!IS_NIL(arg) && !IS_NIL(res = EVAL_ARG()))
             ;
           break;
 
         case P_OR:
-          while (!IS_NIL(arg) && IS_NIL(res = evalarg()))
+          while (!IS_NIL(arg) && IS_NIL(res = EVAL_ARG()))
             ;
           break;
 
@@ -777,26 +777,26 @@ static FeObject* Evaluate(FeContext* ctx,
           break;
 
         case P_CONS:
-          va = evalarg();
-          res = FeCons(ctx, va, evalarg());
+          va = EVAL_ARG();
+          res = FeCons(ctx, va, EVAL_ARG());
           break;
 
         case P_CAR:
-          res = FeCar(ctx, evalarg());
+          res = FeCar(ctx, EVAL_ARG());
           break;
 
         case P_CDR:
-          res = FeCdr(ctx, evalarg());
+          res = FeCdr(ctx, EVAL_ARG());
           break;
 
         case P_SETCAR:
-          va = CheckType(ctx, evalarg(), FE_TPAIR);
-          CAR(va) = evalarg();
+          va = CheckType(ctx, EVAL_ARG(), FE_TPAIR);
+          CAR(va) = EVAL_ARG();
           break;
 
         case P_SETCDR:
-          va = CheckType(ctx, evalarg(), FE_TPAIR);
-          CDR(va) = evalarg();
+          va = CheckType(ctx, EVAL_ARG(), FE_TPAIR);
+          CDR(va) = EVAL_ARG();
           break;
 
         case P_LIST:
@@ -804,21 +804,21 @@ static FeObject* Evaluate(FeContext* ctx,
           break;
 
         case P_NOT:
-          res = FeMakeBool(ctx, IS_NIL(evalarg()));
+          res = FeMakeBool(ctx, IS_NIL(EVAL_ARG()));
           break;
 
         case P_IS:
-          va = evalarg();
-          res = FeMakeBool(ctx, Equal(va, evalarg()));
+          va = EVAL_ARG();
+          res = FeMakeBool(ctx, Equal(va, EVAL_ARG()));
           break;
 
         case P_ATOM:
-          res = FeMakeBool(ctx, FeGetType(ctx, evalarg()) != FE_TPAIR);
+          res = FeMakeBool(ctx, FeGetType(ctx, EVAL_ARG()) != FE_TPAIR);
           break;
 
         case P_PRINT:
           while (!IS_NIL(arg)) {
-            FeWriteFile(ctx, evalarg(), stdout);
+            FeWriteFile(ctx, EVAL_ARG(), stdout);
             if (!IS_NIL(arg)) {
               printf(" ");
             }
@@ -827,22 +827,22 @@ static FeObject* Evaluate(FeContext* ctx,
           break;
 
         case P_LT:
-          numcmpop(<);
+          NUM_CMP_OP(<);
           break;
         case P_LTE:
-          numcmpop(<=);
+          NUM_CMP_OP(<=);
           break;
         case P_ADD:
-          arithop(+);
+          ARITH_OP(+);
           break;
         case P_SUB:
-          arithop(-);
+          ARITH_OP(-);
           break;
         case P_MUL:
-          arithop(*);
+          ARITH_OP(*);
           break;
         case P_DIV:
-          arithop(/);
+          ARITH_OP(/);
           break;
       }
       break;
