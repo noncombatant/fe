@@ -2,6 +2,9 @@
 // Copyright 2022 Chris Palmer, https://noncombatant.org/
 // SPDX-License-Identifier: MIT
 
+#include <float.h>
+#include <math.h>
+#include <stdbool.h>
 #include <stdnoreturn.h>
 #include <string.h>
 
@@ -207,7 +210,33 @@ static void collectgarbage(FeContext* ctx) {
   }
 }
 
-static int equal(FeObject* a, FeObject* b) {
+// Translated from [the original
+// Java](https://floating-point-gui.de/errors/comparison/).
+//
+// See also
+// https://randomascii.wordpress.com/2012/02/25/comparing-floating-point-numbers-2012-edition/.
+static bool double_nearly_equal(double a, double b, double epsilon) {
+  const double absA = fabs(a);
+  const double absB = fabs(b);
+  const double diff = fabs(a - b);
+// It's OK to turn this warning off for this limited section of code, because
+// it's in the context of handling tiny errors.
+#pragma clang diagnostic push
+#pragma clang diagnostic ignored "-Wfloat-equal"
+  if (a == b) {
+    // Special case; handles infinities.
+    return true;
+  } else if (a == 0 || b == 0 || (absA + absB < DBL_MIN)) {
+#pragma clang diagnostic pop
+    // Either a or b is zero, or both are extremely close to it. Relative error
+    // is less meaningful here.
+    return diff < (epsilon * DBL_MIN);
+  }
+  // Use relative error.
+  return diff / fmin((absA + absB), DBL_MAX) < epsilon;
+}
+
+static int equal(FeObject* a, FeObject* b) {  // TODO return bool
   if (a == b) {
     return 1;
   }
@@ -215,7 +244,7 @@ static int equal(FeObject* a, FeObject* b) {
     return 0;
   }
   if (type(a) == FE_TNUMBER) {
-    return number(a) == number(b);
+    return double_nearly_equal(number(a), number(b), DBL_EPSILON);
   }
   if (type(a) == FE_TSTRING) {
     for (; !isnil(a); a = cdr(a), b = cdr(b)) {
