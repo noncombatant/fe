@@ -21,8 +21,7 @@
 #define cfunc(x) ((x)->cdr.f)
 #define strbuf(x) (&(x)->car.c + 1)
 
-// TODO: size_t
-#define STRBUFSIZE ((int)sizeof(FeObject*) - 1)
+#define STRBUFSIZE (sizeof(FeObject*) - 1)
 #define GCMARKBIT (0x2)
 #define GCSTACKSIZE (256)
 
@@ -261,8 +260,7 @@ static bool Equal(FeObject* a, FeObject* b) {
 
 static int IsStringEqual(FeObject* obj, const char* str) {
   while (!isnil(obj)) {
-    int i;
-    for (i = 0; i < STRBUFSIZE; i++) {
+    for (size_t i = 0; i < STRBUFSIZE; i++) {
       if (strbuf(obj)[i] != *str) {
         return 0;
       }
@@ -432,8 +430,7 @@ void FeWrite(FeContext* ctx, FeObject* obj, FeWriteFn fn, void* udata, int qt) {
         fn(ctx, udata, '"');
       }
       while (!isnil(obj)) {
-        int i;
-        for (i = 0; i < STRBUFSIZE && strbuf(obj)[i]; i++) {
+        for (size_t i = 0; i < STRBUFSIZE && strbuf(obj)[i]; i++) {
           if (qt && strbuf(obj)[i] == '"') {
             fn(ctx, udata, '\\');
           }
