@@ -17,4 +17,4 @@ fe: fe.c fe.h
 	$(CC) $(CFLAGS) -DFE_STANDALONE -o $@ fe.c
 
 clean:
-	-rm -rf fe *.dSYM
+	-rm -rf fe *.o *.dSYM
