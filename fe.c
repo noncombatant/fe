@@ -280,7 +280,7 @@ fe_Object* fe_number(fe_Context* ctx, fe_Number n) {
   return obj;
 }
 
-static fe_Object* buildstring(fe_Context* ctx, fe_Object* tail, int chr) {
+static fe_Object* buildstring(fe_Context* ctx, fe_Object* tail, char chr) {
   if (!tail || strbuf(tail)[STRBUFSIZE - 1] != '\0') {
     fe_Object* obj = fe_cons(ctx, NULL, &nil);
     settype(obj, FE_TSTRING);
@@ -491,7 +491,8 @@ static fe_Object* read_(fe_Context* ctx, fe_ReadFn fn, void* udata) {
   const char* delimiter = " \n\t\r();";
   fe_Object *v, *res, **tail;
   fe_Number n;
-  int chr, gc;
+  char chr;
+  size_t gc;
   char buf[64], *p;
 
   /* get next character */
@@ -594,10 +595,9 @@ fe_Object* fe_read(fe_Context* ctx, fe_ReadFn fn, void* udata) {
   return obj;
 }
 
-static char readfp(fe_Context* ctx, void* udata) {
-  int chr;
-  unused(ctx);
-  return (chr = fgetc(udata)) == EOF ? '\0' : chr;
+static char readfp(fe_Context*, void* udata) {
+  int c = fgetc(udata);
+  return c == EOF ? '\0' : (char)c;
 }
 
 fe_Object* fe_readfp(fe_Context* ctx, FILE* fp) {
@@ -621,7 +621,7 @@ static fe_Object* evallist(fe_Context* ctx, fe_Object* lst, fe_Object* env) {
 
 static fe_Object* dolist(fe_Context* ctx, fe_Object* lst, fe_Object* env) {
   fe_Object* res = &nil;
-  int save = fe_savegc(ctx);
+  size_t save = fe_savegc(ctx);
   while (!isnil(lst)) {
     fe_restoregc(ctx, save);
     fe_pushgc(ctx, lst);
