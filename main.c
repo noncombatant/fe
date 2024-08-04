@@ -51,35 +51,35 @@ int main(int count, char* arguments[]) {
 
   // Initialize the context:
   char* arena = malloc(arena_size);
-  FeContext* ctx = fe_open(arena, arena_size);
+  FeContext* ctx = FeOpenContext(arena, arena_size);
 
   FILE* input = stdin;
   if (count > 0) {
     input = fopen(arguments[0], "rb");
     if (!input) {
-      fe_error(ctx, "could not open input file");
+      FeHandleError(ctx, "could not open input file");
     }
   }
 
   if (input == stdin) {
-    fe_handlers(ctx)->error = HandleError;
+    FeGetHandlers(ctx)->error = HandleError;
   }
-  size_t gc = fe_savegc(ctx);
+  size_t gc = FeSaveGC(ctx);
   setjmp(top_level);
 
   // REPL:
   while (true) {
-    fe_restoregc(ctx, gc);
+    FeRestoreGC(ctx, gc);
     if (input == stdin) {
       printf("fe > ");
     }
-    FeObject* obj = fe_readfp(ctx, input);
+    FeObject* obj = FeReadFile(ctx, input);
     if (obj == NULL) {
       break;
     }
-    obj = fe_eval(ctx, obj);
+    obj = FeEvaluate(ctx, obj);
     if (input == stdin) {
-      fe_writefp(ctx, obj, stdout);
+      FeWriteFile(ctx, obj, stdout);
       printf("\n");
     }
   }

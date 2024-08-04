@@ -38,35 +38,47 @@ enum {
   FE_TPTR
 };
 
-FeContext* fe_open(void* ptr, size_t size);
-void fe_close(FeContext* ctx);
-FeHandlers* fe_handlers(FeContext* ctx);
-void fe_error(FeContext* ctx, const char* msg);
-FeObject* fe_nextarg(FeContext* ctx, FeObject** arg);
-int fe_type(FeContext* ctx, FeObject* obj);   // TODO enum return
-int fe_isnil(FeContext* ctx, FeObject* obj);  // TODO bool
-void fe_pushgc(FeContext* ctx, FeObject* obj);
-void fe_restoregc(FeContext* ctx, size_t idx);
-size_t fe_savegc(FeContext* ctx);
-void fe_mark(FeContext* ctx, FeObject* obj);
-FeObject* fe_cons(FeContext* ctx, FeObject* car, FeObject* cdr);
-FeObject* fe_bool(FeContext* ctx, int b);  // TODO use `bool`
-FeObject* fe_number(FeContext* ctx, FeNumber n);
-FeObject* fe_string(FeContext* ctx, const char* str);
-FeObject* fe_symbol(FeContext* ctx, const char* name);
-FeObject* fe_cfunc(FeContext* ctx, FeCFunc fn);
-FeObject* fe_ptr(FeContext* ctx, void* ptr);
-FeObject* fe_list(FeContext* ctx, FeObject** objs, int n);
-FeObject* fe_car(FeContext* ctx, FeObject* obj);
-FeObject* fe_cdr(FeContext* ctx, FeObject* obj);
-void fe_write(FeContext* ctx, FeObject* obj, FeWriteFn fn, void* udata, int qt);
-void fe_writefp(FeContext* ctx, FeObject* obj, FILE* fp);
-int fe_tostring(FeContext* ctx, FeObject* obj, char* dst, int size);
-FeNumber fe_tonumber(FeContext* ctx, FeObject* obj);
-void* fe_toptr(FeContext* ctx, FeObject* obj);
-void fe_set(FeContext* ctx, FeObject* sym, FeObject* v);
-FeObject* fe_read(FeContext* ctx, FeReadFn fn, void* udata);
-FeObject* fe_readfp(FeContext* ctx, FILE* fp);
-FeObject* fe_eval(FeContext* ctx, FeObject* obj);
+FeContext* FeOpenContext(void* ptr, size_t size);
+void FeCloseContext(FeContext* ctx);
+FeHandlers* FeGetHandlers(FeContext* ctx);
+
+void FeHandleError(FeContext* ctx, const char* msg);
+FeObject* FeGetNextArgument(FeContext* ctx, FeObject** arg);
+
+int FeGetType(FeContext* ctx, FeObject* obj);  // TODO enum return
+int FeIsNil(FeContext* ctx, FeObject* obj);    // TODO bool
+
+void FePushGC(FeContext* ctx, FeObject* obj);
+void FeRestoreGC(FeContext* ctx, size_t idx);
+size_t FeSaveGC(FeContext* ctx);
+void FeMark(FeContext* ctx, FeObject* obj);
+
+FeObject* FeCons(FeContext* ctx, FeObject* car, FeObject* cdr);
+FeObject* FeMakeBool(FeContext* ctx, int b);  // TODO use `bool`
+FeObject* FeMakeNumber(FeContext* ctx, FeNumber n);
+FeObject* FeMakeString(FeContext* ctx, const char* str);
+FeObject* FeMakeSymbol(FeContext* ctx, const char* name);
+FeObject* FeMakeCFunc(FeContext* ctx, FeCFunc fn);
+FeObject* FeMakePtr(FeContext* ctx, void* ptr);
+FeObject* FeMakeList(FeContext* ctx, FeObject** objs, int n);
+
+FeObject* FeCar(FeContext* ctx, FeObject* obj);
+FeObject* FeCdr(FeContext* ctx, FeObject* obj);
+
+void FeWrite(FeContext* ctx, FeObject* obj, FeWriteFn fn, void* udata, int qt);
+void FeWriteFile(FeContext* ctx, FeObject* obj, FILE* fp);
+
+FeObject* FeRead(FeContext* ctx, FeReadFn fn, void* udata);
+FeObject* FeReadFile(FeContext* ctx, FILE* fp);
+
+int FeToString(FeContext* ctx,
+               FeObject* obj,
+               char* dst,
+               int size);  // TODO size_t
+FeNumber FeToNumber(FeContext* ctx, FeObject* obj);
+void* FeToPtr(FeContext* ctx, FeObject* obj);
+void FeSet(FeContext* ctx, FeObject* sym, FeObject* v);
+
+FeObject* FeEvaluate(FeContext* ctx, FeObject* obj);
 
 #endif
