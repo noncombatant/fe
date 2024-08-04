@@ -11,6 +11,9 @@ CFLAGS += -O3 -fsanitize=undefined
 # CFLAGS += -O0 -fsanitize=address -g
 # LDFLAGS = -static-libsan
 
+test: fe
+	./test.sh
+
 run: fe
 	./fe
 
