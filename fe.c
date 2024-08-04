@@ -9,21 +9,21 @@
 
 #include "fe.h"
 
-#define car(x) ((x)->car.o)
-#define cdr(x) ((x)->cdr.o)
-#define tag(x) ((x)->car.c)
-#define isnil(x) ((x) == &nil)
-#define type(x) (tag(x) & 0x1 ? tag(x) >> 2 : FE_TPAIR)
+#define CAR(x) ((x)->car.o)
+#define CDR(x) ((x)->cdr.o)
+#define TAG(x) ((x)->car.c)
+#define IS_NIL(x) ((x) == &nil)
+#define TYPE(x) (TAG(x) & 0x1 ? TAG(x) >> 2 : FE_TPAIR)
 // TODO: When we use a real enum for type, update this.
-#define settype(x, t) (tag(x) = (char)((t) << 2 | 1))
-#define number(x) ((x)->cdr.n)
-#define prim(x) ((x)->cdr.c)
-#define cfunc(x) ((x)->cdr.f)
-#define strbuf(x) (&(x)->car.c + 1)
+#define SET_TYPE(x, t) (TAG(x) = (char)((t) << 2 | 1))
+#define NUMBER(x) ((x)->cdr.n)
+#define PRIM(x) ((x)->cdr.c)
+#define CFUNC(x) ((x)->cdr.f)
+#define STRING_BUFFER(x) (&(x)->car.c + 1)
 
-#define STRBUFSIZE (sizeof(FeObject*) - 1)
-#define GCMARKBIT (0x2)
-#define GCSTACKSIZE (256)
+#define STRING_BUFFER_SIZE (sizeof(FeObject*) - 1)
+#define GC_MARK_BIT (0x2)
+#define GC_STACK_SIZE (256)
 
 enum {
   P_LET,
@@ -77,8 +77,8 @@ struct FeObject {
 
 struct FeContext {
   FeHandlers handlers;
-  FeObject* gcstack[GCSTACKSIZE];
-  size_t gcstack_idx;
+  FeObject* gcstack[GC_STACK_SIZE];
+  size_t gc_stack_index;
   FeObject* objects;
   size_t object_count;
   FeObject* calllist;
@@ -104,9 +104,9 @@ void noreturn FeHandleError(FeContext* ctx, const char* msg) {
   }
   /* error handler returned -- print error and traceback, exit */
   fprintf(stderr, "error: %s\n", msg);
-  for (; !isnil(cl); cl = cdr(cl)) {
+  for (; !IS_NIL(cl); cl = CDR(cl)) {
     char buf[64];
-    FeToString(ctx, car(cl), buf, sizeof(buf));
+    FeToString(ctx, CAR(cl), buf, sizeof(buf));
     fprintf(stderr, "=> %s\n", buf);
   }
   exit(EXIT_FAILURE);
@@ -114,59 +114,59 @@ void noreturn FeHandleError(FeContext* ctx, const char* msg) {
 
 FeObject* FeGetNextArgument(FeContext* ctx, FeObject** arg) {
   FeObject* a = *arg;
-  if (type(a) != FE_TPAIR) {
-    if (isnil(a)) {
+  if (TYPE(a) != FE_TPAIR) {
+    if (IS_NIL(a)) {
       FeHandleError(ctx, "too few arguments");
     }
     FeHandleError(ctx, "dotted pair in argument list");
   }
-  *arg = cdr(a);
-  return car(a);
+  *arg = CDR(a);
+  return CAR(a);
 }
 
 static FeObject* CheckType(FeContext* ctx, FeObject* obj, int type) {
   char buf[64];
-  if (type(obj) != type) {
+  if (TYPE(obj) != type) {
     sprintf(buf, "expected %s, got %s", type_names[type],
-            type_names[type(obj)]);
+            type_names[TYPE(obj)]);
     FeHandleError(ctx, buf);
   }
   return obj;
 }
 
 int FeGetType(FeContext*, FeObject* obj) {
-  return type(obj);
+  return TYPE(obj);
 }
 
 bool FeIsNil(FeContext*, FeObject* obj) {
-  return isnil(obj);
+  return IS_NIL(obj);
 }
 
 void FePushGC(FeContext* ctx, FeObject* obj) {
-  if (ctx->gcstack_idx == GCSTACKSIZE) {
-    FeHandleError(ctx, "gc stack overflow");
+  if (ctx->gc_stack_index == GC_STACK_SIZE) {
+    FeHandleError(ctx, "GC stack overflow");
   }
-  ctx->gcstack[ctx->gcstack_idx++] = obj;
+  ctx->gcstack[ctx->gc_stack_index++] = obj;
 }
 
-void FeRestoreGC(FeContext* ctx, size_t idx) {
-  ctx->gcstack_idx = idx;
+void FeRestoreGC(FeContext* ctx, size_t index) {
+  ctx->gc_stack_index = index;
 }
 
 size_t FeSaveGC(FeContext* ctx) {
-  return ctx->gcstack_idx;
+  return ctx->gc_stack_index;
 }
 
 void FeMark(FeContext* ctx, FeObject* obj) {
   FeObject* car;
 begin:
-  if (tag(obj) & GCMARKBIT) {
+  if (TAG(obj) & GC_MARK_BIT) {
     return;
   }
-  car = car(obj); /* store car before modifying it with GCMARKBIT */
-  tag(obj) |= GCMARKBIT;
+  car = CAR(obj); /* store car before modifying it with GC_MARK_BIT */
+  TAG(obj) |= GC_MARK_BIT;
 
-  switch (type(obj)) {
+  switch (TYPE(obj)) {
     case FE_TPAIR:
       FeMark(ctx, car);
       /* fall through */
@@ -174,7 +174,7 @@ begin:
     case FE_TMACRO:
     case FE_TSYMBOL:
     case FE_TSTRING:
-      obj = cdr(obj);
+      obj = CDR(obj);
       goto begin;
 
     case FE_TPTR:
@@ -188,25 +188,25 @@ begin:
 static void CollectGarbage(FeContext* ctx) {
   size_t i;
   /* mark */
-  for (i = 0; i < ctx->gcstack_idx; i++) {
+  for (i = 0; i < ctx->gc_stack_index; i++) {
     FeMark(ctx, ctx->gcstack[i]);
   }
   FeMark(ctx, ctx->symlist);
   /* sweep and unmark */
   for (i = 0; i < ctx->object_count; i++) {
     FeObject* obj = &ctx->objects[i];
-    if (type(obj) == FE_TFREE) {
+    if (TYPE(obj) == FE_TFREE) {
       continue;
     }
-    if (~tag(obj) & GCMARKBIT) {
-      if (type(obj) == FE_TPTR && ctx->handlers.gc) {
+    if (~TAG(obj) & GC_MARK_BIT) {
+      if (TYPE(obj) == FE_TPTR && ctx->handlers.gc) {
         ctx->handlers.gc(ctx, obj);
       }
-      settype(obj, FE_TFREE);
-      cdr(obj) = ctx->freelist;
+      SET_TYPE(obj, FE_TFREE);
+      CDR(obj) = ctx->freelist;
       ctx->freelist = obj;
     } else {
-      tag(obj) &= ~GCMARKBIT;
+      TAG(obj) &= ~GC_MARK_BIT;
     }
   }
 }
@@ -241,15 +241,15 @@ static bool Equal(FeObject* a, FeObject* b) {
   if (a == b) {
     return true;
   }
-  if (type(a) != type(b)) {
+  if (TYPE(a) != TYPE(b)) {
     return false;
   }
-  if (type(a) == FE_TNUMBER) {
-    return IsNearlyEqual(number(a), number(b), DBL_EPSILON);
+  if (TYPE(a) == FE_TNUMBER) {
+    return IsNearlyEqual(NUMBER(a), NUMBER(b), DBL_EPSILON);
   }
-  if (type(a) == FE_TSTRING) {
-    for (; !isnil(a); a = cdr(a), b = cdr(b)) {
-      if (car(a) != car(b)) {
+  if (TYPE(a) == FE_TSTRING) {
+    for (; !IS_NIL(a); a = CDR(a), b = CDR(b)) {
+      if (CAR(a) != CAR(b)) {
         return false;
       }
     }
@@ -259,16 +259,16 @@ static bool Equal(FeObject* a, FeObject* b) {
 }
 
 static int IsStringEqual(FeObject* obj, const char* str) {
-  while (!isnil(obj)) {
-    for (size_t i = 0; i < STRBUFSIZE; i++) {
-      if (strbuf(obj)[i] != *str) {
+  while (!IS_NIL(obj)) {
+    for (size_t i = 0; i < STRING_BUFFER_SIZE; i++) {
+      if (STRING_BUFFER(obj)[i] != *str) {
         return 0;
       }
       if (*str) {
         str++;
       }
     }
-    obj = cdr(obj);
+    obj = CDR(obj);
   }
   return *str == '\0';
 }
@@ -276,23 +276,23 @@ static int IsStringEqual(FeObject* obj, const char* str) {
 static FeObject* MakeObject(FeContext* ctx) {
   FeObject* obj;
   /* do gc if freelist has no more objects */
-  if (isnil(ctx->freelist)) {
+  if (IS_NIL(ctx->freelist)) {
     CollectGarbage(ctx);
-    if (isnil(ctx->freelist)) {
+    if (IS_NIL(ctx->freelist)) {
       FeHandleError(ctx, "out of memory");
     }
   }
   /* get object from freelist and push to the gcstack */
   obj = ctx->freelist;
-  ctx->freelist = cdr(obj);
+  ctx->freelist = CDR(obj);
   FePushGC(ctx, obj);
   return obj;
 }
 
 FeObject* FeCons(FeContext* ctx, FeObject* car, FeObject* cdr) {
   FeObject* obj = MakeObject(ctx);
-  car(obj) = car;
-  cdr(obj) = cdr;
+  CAR(obj) = car;
+  CDR(obj) = cdr;
   return obj;
 }
 
@@ -302,22 +302,22 @@ FeObject* FeMakeBool(FeContext* ctx, bool b) {
 
 FeObject* FeMakeNumber(FeContext* ctx, FeNumber n) {
   FeObject* obj = MakeObject(ctx);
-  settype(obj, FE_TNUMBER);
-  number(obj) = n;
+  SET_TYPE(obj, FE_TNUMBER);
+  NUMBER(obj) = n;
   return obj;
 }
 
 static FeObject* BuildString(FeContext* ctx, FeObject* tail, char chr) {
-  if (!tail || strbuf(tail)[STRBUFSIZE - 1] != '\0') {
+  if (!tail || STRING_BUFFER(tail)[STRING_BUFFER_SIZE - 1] != '\0') {
     FeObject* obj = FeCons(ctx, NULL, &nil);
-    settype(obj, FE_TSTRING);
+    SET_TYPE(obj, FE_TSTRING);
     if (tail) {
-      cdr(tail) = obj;
-      ctx->gcstack_idx--;
+      CDR(tail) = obj;
+      ctx->gc_stack_index--;
     }
     tail = obj;
   }
-  strbuf(tail)[strlen(strbuf(tail))] = chr;
+  STRING_BUFFER(tail)[strlen(STRING_BUFFER(tail))] = chr;
   return tail;
 }
 
@@ -333,34 +333,34 @@ FeObject* FeMakeString(FeContext* ctx, const char* str) {
 FeObject* FeMakeSymbol(FeContext* ctx, const char* name) {
   FeObject* obj;
   /* try to find in symlist */
-  for (obj = ctx->symlist; !isnil(obj); obj = cdr(obj)) {
-    if (IsStringEqual(car(cdr(car(obj))), name)) {
-      return car(obj);
+  for (obj = ctx->symlist; !IS_NIL(obj); obj = CDR(obj)) {
+    if (IsStringEqual(CAR(CDR(CAR(obj))), name)) {
+      return CAR(obj);
     }
   }
   /* create new object, push to symlist and return */
   obj = MakeObject(ctx);
-  settype(obj, FE_TSYMBOL);
-  cdr(obj) = FeCons(ctx, FeMakeString(ctx, name), &nil);
+  SET_TYPE(obj, FE_TSYMBOL);
+  CDR(obj) = FeCons(ctx, FeMakeString(ctx, name), &nil);
   ctx->symlist = FeCons(ctx, obj, ctx->symlist);
   return obj;
 }
 
 FeObject* FeMakeCFunc(FeContext* ctx, FeCFunc fn) {
   FeObject* obj = MakeObject(ctx);
-  settype(obj, FE_TCFUNC);
-  cfunc(obj) = fn;
+  SET_TYPE(obj, FE_TCFUNC);
+  CFUNC(obj) = fn;
   return obj;
 }
 
 FeObject* FeMakePtr(FeContext* ctx, void* ptr) {
   FeObject* obj = MakeObject(ctx);
-  settype(obj, FE_TPTR);
-  cdr(obj) = ptr;
+  SET_TYPE(obj, FE_TPTR);
+  CDR(obj) = ptr;
   return obj;
 }
 
-FeObject* FeMakeList(FeContext* ctx, FeObject** objs, int n) {
+FeObject* FeMakeList(FeContext* ctx, FeObject** objs, int n) {  // TODO size_t
   FeObject* res = &nil;
   while (n--) {
     res = FeCons(ctx, objs[n], res);
@@ -369,17 +369,17 @@ FeObject* FeMakeList(FeContext* ctx, FeObject** objs, int n) {
 }
 
 FeObject* FeCar(FeContext* ctx, FeObject* obj) {
-  if (isnil(obj)) {
+  if (IS_NIL(obj)) {
     return obj;
   }
-  return car(CheckType(ctx, obj, FE_TPAIR));
+  return CAR(CheckType(ctx, obj, FE_TPAIR));
 }
 
 FeObject* FeCdr(FeContext* ctx, FeObject* obj) {
-  if (isnil(obj)) {
+  if (IS_NIL(obj)) {
     return obj;
   }
-  return cdr(CheckType(ctx, obj, FE_TPAIR));
+  return CDR(CheckType(ctx, obj, FE_TPAIR));
 }
 
 static void WriteString(FeContext* ctx,
@@ -394,27 +394,27 @@ static void WriteString(FeContext* ctx,
 void FeWrite(FeContext* ctx, FeObject* obj, FeWriteFn fn, void* udata, int qt) {
   char buf[32];
 
-  switch (type(obj)) {
+  switch (TYPE(obj)) {
     case FE_TNIL:
       WriteString(ctx, fn, udata, "nil");
       break;
 
     case FE_TNUMBER:
-      sprintf(buf, "%.7g", number(obj));
+      sprintf(buf, "%.7g", NUMBER(obj));
       WriteString(ctx, fn, udata, buf);
       break;
 
     case FE_TPAIR:
       fn(ctx, udata, '(');
       for (;;) {
-        FeWrite(ctx, car(obj), fn, udata, 1);
-        obj = cdr(obj);
-        if (type(obj) != FE_TPAIR) {
+        FeWrite(ctx, CAR(obj), fn, udata, 1);
+        obj = CDR(obj);
+        if (TYPE(obj) != FE_TPAIR) {
           break;
         }
         fn(ctx, udata, ' ');
       }
-      if (!isnil(obj)) {
+      if (!IS_NIL(obj)) {
         WriteString(ctx, fn, udata, " . ");
         FeWrite(ctx, obj, fn, udata, 1);
       }
@@ -422,21 +422,22 @@ void FeWrite(FeContext* ctx, FeObject* obj, FeWriteFn fn, void* udata, int qt) {
       break;
 
     case FE_TSYMBOL:
-      FeWrite(ctx, car(cdr(obj)), fn, udata, 0);
+      FeWrite(ctx, CAR(CDR(obj)), fn, udata, 0);
       break;
 
     case FE_TSTRING:
       if (qt) {
         fn(ctx, udata, '"');
       }
-      while (!isnil(obj)) {
-        for (size_t i = 0; i < STRBUFSIZE && strbuf(obj)[i]; i++) {
-          if (qt && strbuf(obj)[i] == '"') {
+      while (!IS_NIL(obj)) {
+        for (size_t i = 0; i < STRING_BUFFER_SIZE && STRING_BUFFER(obj)[i];
+             i++) {
+          if (qt && STRING_BUFFER(obj)[i] == '"') {
             fn(ctx, udata, '\\');
           }
-          fn(ctx, udata, strbuf(obj)[i]);
+          fn(ctx, udata, STRING_BUFFER(obj)[i]);
         }
-        obj = cdr(obj);
+        obj = CDR(obj);
       }
       if (qt) {
         fn(ctx, udata, '"');
@@ -444,7 +445,7 @@ void FeWrite(FeContext* ctx, FeObject* obj, FeWriteFn fn, void* udata, int qt) {
       break;
 
     default:
-      sprintf(buf, "[%s %p]", type_names[type(obj)], (void*)obj);
+      sprintf(buf, "[%s %p]", type_names[TYPE(obj)], (void*)obj);
       WriteString(ctx, fn, udata, buf);
       break;
   }
@@ -482,27 +483,27 @@ size_t FeToString(FeContext* ctx, FeObject* obj, char* dst, size_t size) {
 }
 
 FeNumber FeToNumber(FeContext* ctx, FeObject* obj) {
-  return number(CheckType(ctx, obj, FE_TNUMBER));
+  return NUMBER(CheckType(ctx, obj, FE_TNUMBER));
 }
 
 void* FeToPtr(FeContext* ctx, FeObject* obj) {
-  return cdr(CheckType(ctx, obj, FE_TPTR));
+  return CDR(CheckType(ctx, obj, FE_TPTR));
 }
 
 static FeObject* GetBound(FeObject* sym, FeObject* env) {
   /* try to find in environment */
-  for (; !isnil(env); env = cdr(env)) {
-    FeObject* x = car(env);
-    if (car(x) == sym) {
+  for (; !IS_NIL(env); env = CDR(env)) {
+    FeObject* x = CAR(env);
+    if (CAR(x) == sym) {
       return x;
     }
   }
   /* return global */
-  return cdr(sym);
+  return CDR(sym);
 }
 
 void FeSet(FeContext*, FeObject* sym, FeObject* v) {
-  cdr(GetBound(sym, &nil)) = v;
+  CDR(GetBound(sym, &nil)) = v;
 }
 
 static FeObject rparen;
@@ -546,13 +547,13 @@ static FeObject* Read(FeContext* ctx, FeReadFn fn, void* udata) {
         if (v == NULL) {
           FeHandleError(ctx, "unclosed list");
         }
-        if (type(v) == FE_TSYMBOL && IsStringEqual(car(cdr(v)), ".")) {
+        if (TYPE(v) == FE_TSYMBOL && IsStringEqual(CAR(CDR(v)), ".")) {
           /* dotted pair */
           *tail = FeRead(ctx, fn, udata);
         } else {
           /* proper pair */
           *tail = FeCons(ctx, v, &nil);
-          tail = &cdr(*tail);
+          tail = &CDR(*tail);
         }
         FeRestoreGC(ctx, gc);
         FePushGC(ctx, res);
@@ -632,10 +633,10 @@ static FeObject* Evaluate(FeContext* ctx,
 static FeObject* EvaluateList(FeContext* ctx, FeObject* lst, FeObject* env) {
   FeObject* res = &nil;
   FeObject** tail = &res;
-  while (!isnil(lst)) {
+  while (!IS_NIL(lst)) {
     *tail = FeCons(ctx, Evaluate(ctx, FeGetNextArgument(ctx, &lst), env, NULL),
                    &nil);
-    tail = &cdr(*tail);
+    tail = &CDR(*tail);
   }
   return res;
 }
@@ -643,7 +644,7 @@ static FeObject* EvaluateList(FeContext* ctx, FeObject* lst, FeObject* env) {
 static FeObject* DoList(FeContext* ctx, FeObject* lst, FeObject* env) {
   FeObject* res = &nil;
   size_t save = FeSaveGC(ctx);
-  while (!isnil(lst)) {
+  while (!IS_NIL(lst)) {
     FeRestoreGC(ctx, save);
     FePushGC(ctx, lst);
     FePushGC(ctx, env);
@@ -656,13 +657,13 @@ static FeObject* ArgsToEnv(FeContext* ctx,
                            FeObject* prm,
                            FeObject* arg,
                            FeObject* env) {
-  while (!isnil(prm)) {
-    if (type(prm) != FE_TPAIR) {
+  while (!IS_NIL(prm)) {
+    if (TYPE(prm) != FE_TPAIR) {
       env = FeCons(ctx, FeCons(ctx, prm, arg), env);
       break;
     }
-    env = FeCons(ctx, FeCons(ctx, car(prm), FeCar(ctx, arg)), env);
-    prm = cdr(prm);
+    env = FeCons(ctx, FeCons(ctx, CAR(prm), FeCar(ctx, arg)), env);
+    prm = CDR(prm);
     arg = FeCdr(ctx, arg);
   }
   return env;
@@ -673,7 +674,7 @@ static FeObject* ArgsToEnv(FeContext* ctx,
 #define arithop(op)                          \
   {                                          \
     FeNumber x = FeToNumber(ctx, evalarg()); \
-    while (!isnil(arg)) {                    \
+    while (!IS_NIL(arg)) {                   \
       x = x op FeToNumber(ctx, evalarg());   \
     }                                        \
     res = FeMakeNumber(ctx, x);              \
@@ -683,7 +684,7 @@ static FeObject* ArgsToEnv(FeContext* ctx,
   {                                                  \
     va = CheckType(ctx, evalarg(), FE_TNUMBER);      \
     vb = CheckType(ctx, evalarg(), FE_TNUMBER);      \
-    res = FeMakeBool(ctx, number(va) op number(vb)); \
+    res = FeMakeBool(ctx, NUMBER(va) op NUMBER(vb)); \
   }
 
 static FeObject* Evaluate(FeContext* ctx,
@@ -694,25 +695,25 @@ static FeObject* Evaluate(FeContext* ctx,
   FeObject cl, *va, *vb;
   size_t n, gc;
 
-  if (type(obj) == FE_TSYMBOL) {
-    return cdr(GetBound(obj, env));
+  if (TYPE(obj) == FE_TSYMBOL) {
+    return CDR(GetBound(obj, env));
   }
-  if (type(obj) != FE_TPAIR) {
+  if (TYPE(obj) != FE_TPAIR) {
     return obj;
   }
 
-  car(&cl) = obj;
-  cdr(&cl) = ctx->calllist;
+  CAR(&cl) = obj;
+  CDR(&cl) = ctx->calllist;
   ctx->calllist = &cl;
 
   gc = FeSaveGC(ctx);
-  fn = Evaluate(ctx, car(obj), env, NULL);
-  arg = cdr(obj);
+  fn = Evaluate(ctx, CAR(obj), env, NULL);
+  arg = CDR(obj);
   res = &nil;
 
-  switch (type(fn)) {
+  switch (TYPE(fn)) {
     case FE_TPRIM:
-      switch (prim(fn)) {
+      switch (PRIM(fn)) {
         case P_LET:
           va = CheckType(ctx, FeGetNextArgument(ctx, &arg), FE_TSYMBOL);
           if (newenv) {
@@ -722,20 +723,20 @@ static FeObject* Evaluate(FeContext* ctx,
 
         case P_SET:
           va = CheckType(ctx, FeGetNextArgument(ctx, &arg), FE_TSYMBOL);
-          cdr(GetBound(va, env)) = evalarg();
+          CDR(GetBound(va, env)) = evalarg();
           break;
 
         case P_IF:
-          while (!isnil(arg)) {
+          while (!IS_NIL(arg)) {
             va = evalarg();
-            if (!isnil(va)) {
-              res = isnil(arg) ? va : evalarg();
+            if (!IS_NIL(va)) {
+              res = IS_NIL(arg) ? va : evalarg();
               break;
             }
-            if (isnil(arg)) {
+            if (IS_NIL(arg)) {
               break;
             }
-            arg = cdr(arg);
+            arg = CDR(arg);
           }
           break;
 
@@ -744,14 +745,14 @@ static FeObject* Evaluate(FeContext* ctx,
           va = FeCons(ctx, env, arg);
           FeGetNextArgument(ctx, &arg);
           res = MakeObject(ctx);
-          settype(res, prim(fn) == P_FN ? FE_TFUNC : FE_TMACRO);
-          cdr(res) = va;
+          SET_TYPE(res, PRIM(fn) == P_FN ? FE_TFUNC : FE_TMACRO);
+          CDR(res) = va;
           break;
 
         case P_WHILE:
           va = FeGetNextArgument(ctx, &arg);
           n = FeSaveGC(ctx);
-          while (!isnil(Evaluate(ctx, va, env, NULL))) {
+          while (!IS_NIL(Evaluate(ctx, va, env, NULL))) {
             DoList(ctx, arg, env);
             FeRestoreGC(ctx, n);
           }
@@ -762,12 +763,12 @@ static FeObject* Evaluate(FeContext* ctx,
           break;
 
         case P_AND:
-          while (!isnil(arg) && !isnil(res = evalarg()))
+          while (!IS_NIL(arg) && !IS_NIL(res = evalarg()))
             ;
           break;
 
         case P_OR:
-          while (!isnil(arg) && isnil(res = evalarg()))
+          while (!IS_NIL(arg) && IS_NIL(res = evalarg()))
             ;
           break;
 
@@ -790,12 +791,12 @@ static FeObject* Evaluate(FeContext* ctx,
 
         case P_SETCAR:
           va = CheckType(ctx, evalarg(), FE_TPAIR);
-          car(va) = evalarg();
+          CAR(va) = evalarg();
           break;
 
         case P_SETCDR:
           va = CheckType(ctx, evalarg(), FE_TPAIR);
-          cdr(va) = evalarg();
+          CDR(va) = evalarg();
           break;
 
         case P_LIST:
@@ -803,7 +804,7 @@ static FeObject* Evaluate(FeContext* ctx,
           break;
 
         case P_NOT:
-          res = FeMakeBool(ctx, isnil(evalarg()));
+          res = FeMakeBool(ctx, IS_NIL(evalarg()));
           break;
 
         case P_IS:
@@ -816,9 +817,9 @@ static FeObject* Evaluate(FeContext* ctx,
           break;
 
         case P_PRINT:
-          while (!isnil(arg)) {
+          while (!IS_NIL(arg)) {
             FeWriteFile(ctx, evalarg(), stdout);
-            if (!isnil(arg)) {
+            if (!IS_NIL(arg)) {
               printf(" ");
             }
           }
@@ -847,23 +848,23 @@ static FeObject* Evaluate(FeContext* ctx,
       break;
 
     case FE_TCFUNC:
-      res = cfunc(fn)(ctx, EvaluateList(ctx, arg, env));
+      res = CFUNC(fn)(ctx, EvaluateList(ctx, arg, env));
       break;
 
     case FE_TFUNC:
       arg = EvaluateList(ctx, arg, env);
-      va = cdr(fn); /* (env params ...) */
-      vb = cdr(va); /* (params ...) */
-      res = DoList(ctx, cdr(vb), ArgsToEnv(ctx, car(vb), arg, car(va)));
+      va = CDR(fn); /* (env params ...) */
+      vb = CDR(va); /* (params ...) */
+      res = DoList(ctx, CDR(vb), ArgsToEnv(ctx, CAR(vb), arg, CAR(va)));
       break;
 
     case FE_TMACRO:
-      va = cdr(fn); /* (env params ...) */
-      vb = cdr(va); /* (params ...) */
+      va = CDR(fn); /* (env params ...) */
+      vb = CDR(va); /* (params ...) */
       /* replace caller object with code generated by macro and re-eval */
-      *obj = *DoList(ctx, cdr(vb), ArgsToEnv(ctx, car(vb), arg, car(va)));
+      *obj = *DoList(ctx, CDR(vb), ArgsToEnv(ctx, CAR(vb), arg, CAR(va)));
       FeRestoreGC(ctx, gc);
-      ctx->calllist = cdr(&cl);
+      ctx->calllist = CDR(&cl);
       return Evaluate(ctx, obj, env, NULL);
 
     default:
@@ -872,7 +873,7 @@ static FeObject* Evaluate(FeContext* ctx,
 
   FeRestoreGC(ctx, gc);
   FePushGC(ctx, res);
-  ctx->calllist = cdr(&cl);
+  ctx->calllist = CDR(&cl);
   return res;
 }
 
@@ -899,8 +900,8 @@ FeContext* FeOpenContext(void* arena, size_t size) {
   // Populate the freelist:
   for (size_t i = 0; i < ctx->object_count; i++) {
     FeObject* obj = &ctx->objects[i];
-    settype(obj, FE_TFREE);
-    cdr(obj) = ctx->freelist;
+    SET_TYPE(obj, FE_TFREE);
+    CDR(obj) = ctx->freelist;
     ctx->freelist = obj;
   }
 
@@ -912,8 +913,8 @@ FeContext* FeOpenContext(void* arena, size_t size) {
   size_t save = FeSaveGC(ctx);
   for (size_t i = 0; i < P_MAX; i++) {
     FeObject* v = MakeObject(ctx);
-    settype(v, FE_TPRIM);
-    prim(v) = (char)i;
+    SET_TYPE(v, FE_TPRIM);
+    PRIM(v) = (char)i;
     FeSet(ctx, FeMakeSymbol(ctx, primitive_names[i]), v);
     FeRestoreGC(ctx, save);
   }
@@ -922,7 +923,7 @@ FeContext* FeOpenContext(void* arena, size_t size) {
 
 void FeCloseContext(FeContext* ctx) {
   // Clear the GC stack and symbol list: this makes all objects unreachable:
-  ctx->gcstack_idx = 0;
+  ctx->gc_stack_index = 0;
   ctx->symlist = &nil;
   CollectGarbage(ctx);
 }
