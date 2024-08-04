@@ -4,28 +4,29 @@
 
 #include <setjmp.h>
 #include <stdio.h>
+#include <stdnoreturn.h>
 #include <unistd.h>
 
 #include "fe.h"
 
 static jmp_buf toplevel;
-static char buf[64000];
+// TODO: Make this a command line option.
+static char arena[64000];
 
-static void onerror(fe_Context* ctx, const char* msg, fe_Object* cl) {
-  unused(ctx), unused(cl);
-  fprintf(stderr, "error: %s\n", msg);
+static void noreturn onerror(fe_Context*, const char* message, fe_Object*) {
+  fprintf(stderr, "error: %s\n", message);
   longjmp(toplevel, -1);
 }
 
-int main(int argc, char** argv) {
+int main(int count, char* arguments[]) {
   int gc;
   fe_Object* obj;
-  FILE* volatile fp = stdin;
-  fe_Context* ctx = fe_open(buf, sizeof(buf));
+  FILE* fp = stdin;
+  fe_Context* ctx = fe_open(arena, sizeof(arena));
 
   /* init input file */
-  if (argc > 1) {
-    fp = fopen(argv[1], "rb");
+  if (count > 1) {
+    fp = fopen(arguments[1], "rb");
     if (!fp) {
       fe_error(ctx, "could not open input file");
     }
@@ -41,7 +42,7 @@ int main(int argc, char** argv) {
   for (;;) {
     fe_restoregc(ctx, gc);
     if (fp == stdin) {
-      printf("> ");
+      printf("fe > ");
     }
     if (!(obj = fe_readfp(ctx, fp))) {
       break;
@@ -52,6 +53,4 @@ int main(int argc, char** argv) {
       printf("\n");
     }
   }
-
-  return EXIT_SUCCESS;
 }
