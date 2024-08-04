@@ -23,7 +23,6 @@
 #include "fe.h"
 #include <string.h>
 
-#define unused(x) ((void)(x))
 #define car(x) ((x)->car.o)
 #define cdr(x) ((x)->cdr.o)
 #define tag(x) ((x)->car.c)

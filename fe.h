@@ -13,6 +13,8 @@
 
 #define FE_VERSION "1.0"
 
+#define unused(x) ((void)(x))
+
 typedef float fe_Number;
 typedef struct fe_Object fe_Object;
 typedef struct fe_Context fe_Context;
