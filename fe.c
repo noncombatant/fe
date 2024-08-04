@@ -850,52 +850,48 @@ FeObject* fe_eval(FeContext* ctx, FeObject* obj) {
   return eval(ctx, obj, &nil, NULL);
 }
 
-FeContext* fe_open(void* ptr, size_t size) {
-  size_t i, save;
-  FeContext* ctx;
-
-  /* init context struct */
-  ctx = ptr;
+FeContext* fe_open(void* arena, size_t size) {
+  // Initialize the context:
+  FeContext* ctx = arena;
   memset(ctx, 0, sizeof(FeContext));
-  ptr = (char*)ptr + sizeof(FeContext);
+  arena = (char*)arena + sizeof(FeContext);
   size -= sizeof(FeContext);
 
-  /* init objects memory region */
-  ctx->objects = (FeObject*)ptr;
+  // Initialize the objects memory region:
+  ctx->objects = (FeObject*)arena;
   ctx->object_count = size / sizeof(FeObject);
 
-  /* init lists */
+  // Initialize the lists:
   ctx->calllist = &nil;
   ctx->freelist = &nil;
   ctx->symlist = &nil;
 
-  /* populate freelist */
-  for (i = 0; i < ctx->object_count; i++) {
+  // Populate the freelist:
+  for (size_t i = 0; i < ctx->object_count; i++) {
     FeObject* obj = &ctx->objects[i];
     settype(obj, FE_TFREE);
     cdr(obj) = ctx->freelist;
     ctx->freelist = obj;
   }
 
-  /* init objects */
+  // Initialize the objects:
   ctx->t = fe_symbol(ctx, "t");
   fe_set(ctx, ctx->t, ctx->t);
 
-  /* register built in primitives */
-  save = fe_savegc(ctx);
-  for (i = 0; i < P_MAX; i++) {
+  // Register the built-in primitives:
+  size_t save = fe_savegc(ctx);
+  for (size_t i = 0; i < P_MAX; i++) {
     FeObject* v = object(ctx);
     settype(v, FE_TPRIM);
     prim(v) = (char)i;
     fe_set(ctx, fe_symbol(ctx, primnames[i]), v);
     fe_restoregc(ctx, save);
   }
-
   return ctx;
 }
 
 void fe_close(FeContext* ctx) {
-  /* clear gcstack and symlist; makes all objects unreachable */
+  // Clear the GC stack and symbol list: this makes all objects unreachable:
   ctx->gcstack_idx = 0;
   ctx->symlist = &nil;
   collectgarbage(ctx);
