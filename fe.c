@@ -4,7 +4,6 @@
 
 #include <float.h>
 #include <math.h>
-#include <stdbool.h>
 #include <stdnoreturn.h>
 #include <string.h>
 
@@ -237,12 +236,12 @@ static bool double_nearly_equal(double a, double b, double epsilon) {
   return diff / fmin((absA + absB), DBL_MAX) < epsilon;
 }
 
-static int equal(FeObject* a, FeObject* b) {  // TODO return bool
+static bool equal(FeObject* a, FeObject* b) {
   if (a == b) {
-    return 1;
+    return true;
   }
   if (type(a) != type(b)) {
-    return 0;
+    return false;
   }
   if (type(a) == FE_TNUMBER) {
     return double_nearly_equal(number(a), number(b), DBL_EPSILON);
@@ -250,12 +249,12 @@ static int equal(FeObject* a, FeObject* b) {  // TODO return bool
   if (type(a) == FE_TSTRING) {
     for (; !isnil(a); a = cdr(a), b = cdr(b)) {
       if (car(a) != car(b)) {
-        return 0;
+        return false;
       }
     }
     return a == b;
   }
-  return 0;
+  return false;
 }
 
 static int streq(FeObject* obj, const char* str) {
@@ -297,7 +296,7 @@ FeObject* FeCons(FeContext* ctx, FeObject* car, FeObject* cdr) {
   return obj;
 }
 
-FeObject* FeMakeBool(FeContext* ctx, int b) {
+FeObject* FeMakeBool(FeContext* ctx, bool b) {
   return b ? ctx->t : &nil;
 }
 

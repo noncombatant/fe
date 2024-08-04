@@ -5,6 +5,7 @@
 #ifndef FE_H
 #define FE_H
 
+#include <stdbool.h>
 #include <stdio.h>
 #include <stdlib.h>
 
@@ -54,7 +55,7 @@ size_t FeSaveGC(FeContext* ctx);
 void FeMark(FeContext* ctx, FeObject* obj);
 
 FeObject* FeCons(FeContext* ctx, FeObject* car, FeObject* cdr);
-FeObject* FeMakeBool(FeContext* ctx, int b);  // TODO use `bool`
+FeObject* FeMakeBool(FeContext* ctx, bool b);
 FeObject* FeMakeNumber(FeContext* ctx, FeNumber n);
 FeObject* FeMakeString(FeContext* ctx, const char* str);
 FeObject* FeMakeSymbol(FeContext* ctx, const char* name);
