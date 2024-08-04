@@ -13,8 +13,8 @@ CFLAGS += -O3 -fsanitize=undefined
 run: fe
 	./fe
 
-fe: fe.c fe.h
-	$(CC) $(CFLAGS) -DFE_STANDALONE -o $@ fe.c
+fe: main.c fe.o
+	$(CC) $(CFLAGS) -o $@ $^
 
 clean:
 	-rm -rf fe *.o *.dSYM
