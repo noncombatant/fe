@@ -15,7 +15,8 @@
 #define tag(x) ((x)->car.c)
 #define isnil(x) ((x) == &nil)
 #define type(x) (tag(x) & 0x1 ? tag(x) >> 2 : FE_TPAIR)
-#define settype(x, t) (tag(x) = (t) << 2 | 1)
+// TODO: When we use a real enum for type, update this.
+#define settype(x, t) (tag(x) = (char)((t) << 2 | 1))
 #define number(x) ((x)->cdr.n)
 #define prim(x) ((x)->cdr.c)
 #define cfunc(x) ((x)->cdr.f)
