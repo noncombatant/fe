@@ -1,43 +1,27 @@
 # `fe`
 
-`fe` is a *tiny*, embeddable language implemented in ANSI C.
-
-```clojure
-(= reverse (fn (lst)
-  (let res nil)
-  (while lst
-    (= res (cons (car lst) res))
-    (= lst (cdr lst))
-  )
-  res
-))
-
-(= animals '("cat" "dog" "fox"))
-
-(print (reverse animals)) ; => ("fox" "dog" "cat")
-```
+`fe` is a tiny, embeddable, Lisp-like language implemented in ANSI C23.
 
 ## Overview
 
 * Supports numbers, symbols, strings, pairs, lambdas, macros
 * Lexically scoped variables, closures
-* Small memory usage within a fixed-sized memory region — no `malloc`s
-* Simple mark and sweep garbage collector
-* Easy to use C API
+* Small memory usage within a fixed-sized, caller-allocated arena — no `malloc`s
+* Simple mark-and-sweep garbage collector
+* Easy-to-use C API
 * Portable ANSI C — works on 32- and 64-bit
 * Concise — about 1,000 sloc
 
 ## Documentation
 
-* [Demo Scripts](scripts)
-* [C API Overview](doc/c-api.md)
-* [Language Overview](doc/language.md)
-* [Implementation Overview](doc/implementation.md)
+* [Example scripts](scripts) and their [test expectations](tests)
+* [C API overview](doc/c-api.md)
+* [Language overview](doc/language.md)
+* [Implementation overview](doc/implementation.md)
 
 ## Contributing
 
-The library focuses on being lightweight and minimal; pull requests will likely
-not be merged. Bug reports and questions are welcome.
+Bug reports, pull requests, and questions are welcome.
 
 ## License
 
