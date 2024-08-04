@@ -5,8 +5,8 @@
 
 #include "fex.h"
 
-void FexInstallNativeFn(FeContext* ctx, const char* name, FeCFunc fn) {
-  FeSet(ctx, FeMakeSymbol(ctx, name), FeMakeCFunc(ctx, fn));
+void FexInstallNativeFn(FeContext* ctx, const char* name, FeNativeFn fn) {
+  FeSet(ctx, FeMakeSymbol(ctx, name), FeMakeNativeFn(ctx, fn));
 }
 
 void FexInstallNativeFns(FeContext* ctx) {

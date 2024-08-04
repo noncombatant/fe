@@ -14,15 +14,15 @@
 typedef double FeNumber;
 typedef struct FeObject FeObject;
 typedef struct FeContext FeContext;
-typedef FeObject* FeCFunc(FeContext* ctx, FeObject* args);
+typedef FeObject* FeNativeFn(FeContext* ctx, FeObject* args);
 typedef void FeErrorFn(FeContext* ctx, const char* err, FeObject* cl);
 typedef void FeWriteFn(FeContext* ctx, void* udata, char chr);
 typedef char FeReadFn(FeContext* ctx, void* udata);
 
 typedef struct {
   FeErrorFn* error;
-  FeCFunc* mark;
-  FeCFunc* gc;
+  FeNativeFn* mark;
+  FeNativeFn* gc;
 } FeHandlers;
 
 enum {
@@ -32,10 +32,10 @@ enum {
   FE_TNUMBER,
   FE_TSYMBOL,
   FE_TSTRING,
-  FE_TFUNC,
+  FE_TFN,
   FE_TMACRO,
   FE_TPRIM,
-  FE_TCFUNC,
+  FE_TNATIVE_FN,
   FE_TPTR
 };
 
@@ -59,7 +59,7 @@ FeObject* FeMakeBool(FeContext* ctx, bool b);
 FeObject* FeMakeNumber(FeContext* ctx, FeNumber n);
 FeObject* FeMakeString(FeContext* ctx, const char* str);
 FeObject* FeMakeSymbol(FeContext* ctx, const char* name);
-FeObject* FeMakeCFunc(FeContext* ctx, FeCFunc fn);
+FeObject* FeMakeNativeFn(FeContext* ctx, FeNativeFn fn);
 FeObject* FeMakePtr(FeContext* ctx, void* ptr);
 FeObject* FeMakeList(FeContext* ctx, FeObject** objs, size_t n);
 

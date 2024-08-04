@@ -21,7 +21,7 @@
 #define SET_TYPE(x, t) (TAG(x) = (char)((t) << 2 | 1))
 #define NUMBER(x) ((x)->cdr.n)
 #define PRIM(x) ((x)->cdr.c)
-#define CFUNC(x) ((x)->cdr.f)
+#define NATIVE_FN(x) ((x)->cdr.f)
 #define STRING_BUFFER(x) (&(x)->car.c + 1)
 
 #define STRING_BUFFER_SIZE (sizeof(FeObject*) - 1)
@@ -63,13 +63,13 @@ static const char* primitive_names[] = {
     "do",   "cons",  "car", "cdr", "setcar", "setcdr", "list",  "not", "is",
     "atom", "print", "<",   "<=",  "+",      "-",      "*",     "/"};
 
-static const char* type_names[] = {"pair",   "free",   "nil",  "number",
-                                   "symbol", "string", "func", "macro",
-                                   "prim",   "cfunc",  "ptr"};
+static const char* type_names[] = {"pair",   "free",      "nil", "number",
+                                   "symbol", "string",    "fn",  "macro",
+                                   "prim",   "native-fn", "ptr"};
 
 typedef union {
   FeObject* o;
-  FeCFunc* f;
+  FeNativeFn* f;
   FeNumber n;
   char c;
 } Value;
@@ -193,7 +193,7 @@ begin:
     case FE_TPAIR:
       FeMark(ctx, car);
       /* fall through */
-    case FE_TFUNC:
+    case FE_TFN:
     case FE_TMACRO:
     case FE_TSYMBOL:
     case FE_TSTRING:
@@ -368,10 +368,10 @@ FeObject* FeMakeSymbol(FeContext* ctx, const char* name) {
   return obj;
 }
 
-FeObject* FeMakeCFunc(FeContext* ctx, FeCFunc fn) {
+FeObject* FeMakeNativeFn(FeContext* ctx, FeNativeFn fn) {
   FeObject* obj = MakeObject(ctx);
-  SET_TYPE(obj, FE_TCFUNC);
-  CFUNC(obj) = fn;
+  SET_TYPE(obj, FE_TNATIVE_FN);
+  NATIVE_FN(obj) = fn;
   return obj;
 }
 
@@ -766,7 +766,7 @@ static FeObject* Evaluate(FeContext* ctx,
           va = FeCons(ctx, env, arg);
           FeGetNextArgument(ctx, &arg);
           res = MakeObject(ctx);
-          SET_TYPE(res, PRIM(fn) == P_FN ? FE_TFUNC : FE_TMACRO);
+          SET_TYPE(res, PRIM(fn) == P_FN ? FE_TFN : FE_TMACRO);
           CDR(res) = va;
           break;
 
@@ -869,11 +869,11 @@ static FeObject* Evaluate(FeContext* ctx,
       }
       break;
 
-    case FE_TCFUNC:
-      res = CFUNC(fn)(ctx, EvaluateList(ctx, arg, env));
+    case FE_TNATIVE_FN:
+      res = NATIVE_FN(fn)(ctx, EvaluateList(ctx, arg, env));
       break;
 
-    case FE_TFUNC:
+    case FE_TFN:
       arg = EvaluateList(ctx, arg, env);
       va = CDR(fn); /* (env params ...) */
       vb = CDR(va); /* (params ...) */

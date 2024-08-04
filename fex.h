@@ -3,7 +3,7 @@
 
 #include "fe.h"
 
-void FexInstallNativeFn(FeContext* ctx, const char* name, FeCFunc fn);
+void FexInstallNativeFn(FeContext* ctx, const char* name, FeNativeFn fn);
 void FexInstallNativeFns(FeContext* ctx);
 
 FeObject* FexAbs(FeContext* ctx, FeObject* arg);
