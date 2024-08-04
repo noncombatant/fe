@@ -18,7 +18,7 @@
 #define cfunc(x) ((x)->cdr.f)
 #define strbuf(x) (&(x)->car.c + 1)
 
-#define STRBUFSIZE ((int)sizeof(fe_Object*) - 1)
+#define STRBUFSIZE ((int)sizeof(FeObject*) - 1)
 #define GCMARKBIT (0x2)
 #define GCSTACKSIZE (256)
 
@@ -62,37 +62,37 @@ static const char* typenames[] = {"pair",   "free",   "nil",  "number",
                                   "prim",   "cfunc",  "ptr"};
 
 typedef union {
-  fe_Object* o;
-  fe_CFunc f;
-  fe_Number n;
+  FeObject* o;
+  FeCFunc* f;
+  FeNumber n;
   char c;
 } Value;
 
-struct fe_Object {
+struct FeObject {
   Value car, cdr;
 };
 
-struct fe_Context {
-  fe_Handlers handlers;
-  fe_Object* gcstack[GCSTACKSIZE];
+struct FeContext {
+  FeHandlers handlers;
+  FeObject* gcstack[GCSTACKSIZE];
   size_t gcstack_idx;
-  fe_Object* objects;
+  FeObject* objects;
   size_t object_count;
-  fe_Object* calllist;
-  fe_Object* freelist;
-  fe_Object* symlist;
-  fe_Object* t;
+  FeObject* calllist;
+  FeObject* freelist;
+  FeObject* symlist;
+  FeObject* t;
   int nextchr;
 };
 
-static fe_Object nil = {{(void*)(FE_TNIL << 2 | 1)}, {NULL}};
+static FeObject nil = {{(void*)(FE_TNIL << 2 | 1)}, {NULL}};
 
-fe_Handlers* fe_handlers(fe_Context* ctx) {
+FeHandlers* fe_handlers(FeContext* ctx) {
   return &ctx->handlers;
 }
 
-void noreturn fe_error(fe_Context* ctx, const char* msg) {
-  fe_Object* cl = ctx->calllist;
+void noreturn fe_error(FeContext* ctx, const char* msg) {
+  FeObject* cl = ctx->calllist;
   /* reset context state */
   ctx->calllist = &nil;
   /* do error handler */
@@ -109,8 +109,8 @@ void noreturn fe_error(fe_Context* ctx, const char* msg) {
   exit(EXIT_FAILURE);
 }
 
-fe_Object* fe_nextarg(fe_Context* ctx, fe_Object** arg) {
-  fe_Object* a = *arg;
+FeObject* fe_nextarg(FeContext* ctx, FeObject** arg) {
+  FeObject* a = *arg;
   if (type(a) != FE_TPAIR) {
     if (isnil(a)) {
       fe_error(ctx, "too few arguments");
@@ -121,7 +121,7 @@ fe_Object* fe_nextarg(fe_Context* ctx, fe_Object** arg) {
   return car(a);
 }
 
-static fe_Object* checktype(fe_Context* ctx, fe_Object* obj, int type) {
+static FeObject* checktype(FeContext* ctx, FeObject* obj, int type) {
   char buf[64];
   if (type(obj) != type) {
     sprintf(buf, "expected %s, got %s", typenames[type], typenames[type(obj)]);
@@ -130,33 +130,33 @@ static fe_Object* checktype(fe_Context* ctx, fe_Object* obj, int type) {
   return obj;
 }
 
-int fe_type(fe_Context* ctx, fe_Object* obj) {
+int fe_type(FeContext* ctx, FeObject* obj) {
   unused(ctx);
   return type(obj);
 }
 
-int fe_isnil(fe_Context* ctx, fe_Object* obj) {
+int fe_isnil(FeContext* ctx, FeObject* obj) {
   unused(ctx);
   return isnil(obj);
 }
 
-void fe_pushgc(fe_Context* ctx, fe_Object* obj) {
+void fe_pushgc(FeContext* ctx, FeObject* obj) {
   if (ctx->gcstack_idx == GCSTACKSIZE) {
     fe_error(ctx, "gc stack overflow");
   }
   ctx->gcstack[ctx->gcstack_idx++] = obj;
 }
 
-void fe_restoregc(fe_Context* ctx, size_t idx) {
+void fe_restoregc(FeContext* ctx, size_t idx) {
   ctx->gcstack_idx = idx;
 }
 
-size_t fe_savegc(fe_Context* ctx) {
+size_t fe_savegc(FeContext* ctx) {
   return ctx->gcstack_idx;
 }
 
-void fe_mark(fe_Context* ctx, fe_Object* obj) {
-  fe_Object* car;
+void fe_mark(FeContext* ctx, FeObject* obj) {
+  FeObject* car;
 begin:
   if (tag(obj) & GCMARKBIT) {
     return;
@@ -183,7 +183,7 @@ begin:
   }
 }
 
-static void collectgarbage(fe_Context* ctx) {
+static void collectgarbage(FeContext* ctx) {
   size_t i;
   /* mark */
   for (i = 0; i < ctx->gcstack_idx; i++) {
@@ -192,7 +192,7 @@ static void collectgarbage(fe_Context* ctx) {
   fe_mark(ctx, ctx->symlist);
   /* sweep and unmark */
   for (i = 0; i < ctx->object_count; i++) {
-    fe_Object* obj = &ctx->objects[i];
+    FeObject* obj = &ctx->objects[i];
     if (type(obj) == FE_TFREE) {
       continue;
     }
@@ -209,7 +209,7 @@ static void collectgarbage(fe_Context* ctx) {
   }
 }
 
-static int equal(fe_Object* a, fe_Object* b) {
+static int equal(FeObject* a, FeObject* b) {
   if (a == b) {
     return 1;
   }
@@ -230,7 +230,7 @@ static int equal(fe_Object* a, fe_Object* b) {
   return 0;
 }
 
-static int streq(fe_Object* obj, const char* str) {
+static int streq(FeObject* obj, const char* str) {
   while (!isnil(obj)) {
     int i;
     for (i = 0; i < STRBUFSIZE; i++) {
@@ -246,8 +246,8 @@ static int streq(fe_Object* obj, const char* str) {
   return *str == '\0';
 }
 
-static fe_Object* object(fe_Context* ctx) {
-  fe_Object* obj;
+static FeObject* object(FeContext* ctx) {
+  FeObject* obj;
   /* do gc if freelist has no more objects */
   if (isnil(ctx->freelist)) {
     collectgarbage(ctx);
@@ -262,27 +262,27 @@ static fe_Object* object(fe_Context* ctx) {
   return obj;
 }
 
-fe_Object* fe_cons(fe_Context* ctx, fe_Object* car, fe_Object* cdr) {
-  fe_Object* obj = object(ctx);
+FeObject* fe_cons(FeContext* ctx, FeObject* car, FeObject* cdr) {
+  FeObject* obj = object(ctx);
   car(obj) = car;
   cdr(obj) = cdr;
   return obj;
 }
 
-fe_Object* fe_bool(fe_Context* ctx, int b) {
+FeObject* fe_bool(FeContext* ctx, int b) {
   return b ? ctx->t : &nil;
 }
 
-fe_Object* fe_number(fe_Context* ctx, fe_Number n) {
-  fe_Object* obj = object(ctx);
+FeObject* fe_number(FeContext* ctx, FeNumber n) {
+  FeObject* obj = object(ctx);
   settype(obj, FE_TNUMBER);
   number(obj) = n;
   return obj;
 }
 
-static fe_Object* buildstring(fe_Context* ctx, fe_Object* tail, char chr) {
+static FeObject* buildstring(FeContext* ctx, FeObject* tail, char chr) {
   if (!tail || strbuf(tail)[STRBUFSIZE - 1] != '\0') {
-    fe_Object* obj = fe_cons(ctx, NULL, &nil);
+    FeObject* obj = fe_cons(ctx, NULL, &nil);
     settype(obj, FE_TSTRING);
     if (tail) {
       cdr(tail) = obj;
@@ -294,17 +294,17 @@ static fe_Object* buildstring(fe_Context* ctx, fe_Object* tail, char chr) {
   return tail;
 }
 
-fe_Object* fe_string(fe_Context* ctx, const char* str) {
-  fe_Object* obj = buildstring(ctx, NULL, '\0');
-  fe_Object* tail = obj;
+FeObject* fe_string(FeContext* ctx, const char* str) {
+  FeObject* obj = buildstring(ctx, NULL, '\0');
+  FeObject* tail = obj;
   while (*str) {
     tail = buildstring(ctx, tail, *str++);
   }
   return obj;
 }
 
-fe_Object* fe_symbol(fe_Context* ctx, const char* name) {
-  fe_Object* obj;
+FeObject* fe_symbol(FeContext* ctx, const char* name) {
+  FeObject* obj;
   /* try to find in symlist */
   for (obj = ctx->symlist; !isnil(obj); obj = cdr(obj)) {
     if (streq(car(cdr(car(obj))), name)) {
@@ -319,54 +319,51 @@ fe_Object* fe_symbol(fe_Context* ctx, const char* name) {
   return obj;
 }
 
-fe_Object* fe_cfunc(fe_Context* ctx, fe_CFunc fn) {
-  fe_Object* obj = object(ctx);
+FeObject* fe_cfunc(FeContext* ctx, FeCFunc fn) {
+  FeObject* obj = object(ctx);
   settype(obj, FE_TCFUNC);
   cfunc(obj) = fn;
   return obj;
 }
 
-fe_Object* fe_ptr(fe_Context* ctx, void* ptr) {
-  fe_Object* obj = object(ctx);
+FeObject* fe_ptr(FeContext* ctx, void* ptr) {
+  FeObject* obj = object(ctx);
   settype(obj, FE_TPTR);
   cdr(obj) = ptr;
   return obj;
 }
 
-fe_Object* fe_list(fe_Context* ctx, fe_Object** objs, int n) {
-  fe_Object* res = &nil;
+FeObject* fe_list(FeContext* ctx, FeObject** objs, int n) {
+  FeObject* res = &nil;
   while (n--) {
     res = fe_cons(ctx, objs[n], res);
   }
   return res;
 }
 
-fe_Object* fe_car(fe_Context* ctx, fe_Object* obj) {
+FeObject* fe_car(FeContext* ctx, FeObject* obj) {
   if (isnil(obj)) {
     return obj;
   }
   return car(checktype(ctx, obj, FE_TPAIR));
 }
 
-fe_Object* fe_cdr(fe_Context* ctx, fe_Object* obj) {
+FeObject* fe_cdr(FeContext* ctx, FeObject* obj) {
   if (isnil(obj)) {
     return obj;
   }
   return cdr(checktype(ctx, obj, FE_TPAIR));
 }
 
-static void writestr(fe_Context* ctx,
-                     fe_WriteFn fn,
-                     void* udata,
-                     const char* s) {
+static void writestr(FeContext* ctx, FeWriteFn fn, void* udata, const char* s) {
   while (*s) {
     fn(ctx, udata, *s++);
   }
 }
 
-void fe_write(fe_Context* ctx,
-              fe_Object* obj,
-              fe_WriteFn fn,
+void fe_write(FeContext* ctx,
+              FeObject* obj,
+              FeWriteFn fn,
               void* udata,
               int qt) {
   char buf[32];
@@ -428,12 +425,12 @@ void fe_write(fe_Context* ctx,
   }
 }
 
-static void writefp(fe_Context* ctx, void* udata, char chr) {
+static void writefp(FeContext* ctx, void* udata, char chr) {
   unused(ctx);
   fputc(chr, udata);
 }
 
-void fe_writefp(fe_Context* ctx, fe_Object* obj, FILE* fp) {
+void fe_writefp(FeContext* ctx, FeObject* obj, FILE* fp) {
   fe_write(ctx, obj, writefp, fp, 0);
 }
 
@@ -442,7 +439,7 @@ typedef struct {
   int n;
 } CharPtrInt;
 
-static void writebuf(fe_Context* ctx, void* udata, char chr) {
+static void writebuf(FeContext* ctx, void* udata, char chr) {
   CharPtrInt* x = udata;
   unused(ctx);
   if (x->n) {
@@ -451,7 +448,7 @@ static void writebuf(fe_Context* ctx, void* udata, char chr) {
   }
 }
 
-int fe_tostring(fe_Context* ctx, fe_Object* obj, char* dst, int size) {
+int fe_tostring(FeContext* ctx, FeObject* obj, char* dst, int size) {
   CharPtrInt x;
   x.p = dst;
   x.n = size - 1;
@@ -460,18 +457,18 @@ int fe_tostring(fe_Context* ctx, fe_Object* obj, char* dst, int size) {
   return size - x.n - 1;
 }
 
-fe_Number fe_tonumber(fe_Context* ctx, fe_Object* obj) {
+FeNumber fe_tonumber(FeContext* ctx, FeObject* obj) {
   return number(checktype(ctx, obj, FE_TNUMBER));
 }
 
-void* fe_toptr(fe_Context* ctx, fe_Object* obj) {
+void* fe_toptr(FeContext* ctx, FeObject* obj) {
   return cdr(checktype(ctx, obj, FE_TPTR));
 }
 
-static fe_Object* getbound(fe_Object* sym, fe_Object* env) {
+static FeObject* getbound(FeObject* sym, FeObject* env) {
   /* try to find in environment */
   for (; !isnil(env); env = cdr(env)) {
-    fe_Object* x = car(env);
+    FeObject* x = car(env);
     if (car(x) == sym) {
       return x;
     }
@@ -480,17 +477,17 @@ static fe_Object* getbound(fe_Object* sym, fe_Object* env) {
   return cdr(sym);
 }
 
-void fe_set(fe_Context* ctx, fe_Object* sym, fe_Object* v) {
+void fe_set(FeContext* ctx, FeObject* sym, FeObject* v) {
   unused(ctx);
   cdr(getbound(sym, &nil)) = v;
 }
 
-static fe_Object rparen;
+static FeObject rparen;
 
-static fe_Object* read_(fe_Context* ctx, fe_ReadFn fn, void* udata) {
+static FeObject* read_(FeContext* ctx, FeReadFn fn, void* udata) {
   const char* delimiter = " \n\t\r();";
-  fe_Object *v, *res, **tail;
-  fe_Number n;
+  FeObject *v, *res, **tail;
+  FeNumber n;
   char chr;
   size_t gc;
   char buf[64], *p;
@@ -587,31 +584,31 @@ static fe_Object* read_(fe_Context* ctx, fe_ReadFn fn, void* udata) {
   }
 }
 
-fe_Object* fe_read(fe_Context* ctx, fe_ReadFn fn, void* udata) {
-  fe_Object* obj = read_(ctx, fn, udata);
+FeObject* fe_read(FeContext* ctx, FeReadFn fn, void* udata) {
+  FeObject* obj = read_(ctx, fn, udata);
   if (obj == &rparen) {
     fe_error(ctx, "stray ')'");
   }
   return obj;
 }
 
-static char readfp(fe_Context*, void* udata) {
+static char readfp(FeContext*, void* udata) {
   int c = fgetc(udata);
   return c == EOF ? '\0' : (char)c;
 }
 
-fe_Object* fe_readfp(fe_Context* ctx, FILE* fp) {
+FeObject* fe_readfp(FeContext* ctx, FILE* fp) {
   return fe_read(ctx, readfp, fp);
 }
 
-static fe_Object* eval(fe_Context* ctx,
-                       fe_Object* obj,
-                       fe_Object* env,
-                       fe_Object** bind);
+static FeObject* eval(FeContext* ctx,
+                      FeObject* obj,
+                      FeObject* env,
+                      FeObject** bind);
 
-static fe_Object* evallist(fe_Context* ctx, fe_Object* lst, fe_Object* env) {
-  fe_Object* res = &nil;
-  fe_Object** tail = &res;
+static FeObject* evallist(FeContext* ctx, FeObject* lst, FeObject* env) {
+  FeObject* res = &nil;
+  FeObject** tail = &res;
   while (!isnil(lst)) {
     *tail = fe_cons(ctx, eval(ctx, fe_nextarg(ctx, &lst), env, NULL), &nil);
     tail = &cdr(*tail);
@@ -619,8 +616,8 @@ static fe_Object* evallist(fe_Context* ctx, fe_Object* lst, fe_Object* env) {
   return res;
 }
 
-static fe_Object* dolist(fe_Context* ctx, fe_Object* lst, fe_Object* env) {
-  fe_Object* res = &nil;
+static FeObject* dolist(FeContext* ctx, FeObject* lst, FeObject* env) {
+  FeObject* res = &nil;
   size_t save = fe_savegc(ctx);
   while (!isnil(lst)) {
     fe_restoregc(ctx, save);
@@ -631,10 +628,10 @@ static fe_Object* dolist(fe_Context* ctx, fe_Object* lst, fe_Object* env) {
   return res;
 }
 
-static fe_Object* argstoenv(fe_Context* ctx,
-                            fe_Object* prm,
-                            fe_Object* arg,
-                            fe_Object* env) {
+static FeObject* argstoenv(FeContext* ctx,
+                           FeObject* prm,
+                           FeObject* arg,
+                           FeObject* env) {
   while (!isnil(prm)) {
     if (type(prm) != FE_TPAIR) {
       env = fe_cons(ctx, fe_cons(ctx, prm, arg), env);
@@ -649,13 +646,13 @@ static fe_Object* argstoenv(fe_Context* ctx,
 
 #define evalarg() eval(ctx, fe_nextarg(ctx, &arg), env, NULL)
 
-#define arithop(op)                            \
-  {                                            \
-    fe_Number x = fe_tonumber(ctx, evalarg()); \
-    while (!isnil(arg)) {                      \
-      x = x op fe_tonumber(ctx, evalarg());    \
-    }                                          \
-    res = fe_number(ctx, x);                   \
+#define arithop(op)                           \
+  {                                           \
+    FeNumber x = fe_tonumber(ctx, evalarg()); \
+    while (!isnil(arg)) {                     \
+      x = x op fe_tonumber(ctx, evalarg());   \
+    }                                         \
+    res = fe_number(ctx, x);                  \
   }
 
 #define numcmpop(op)                              \
@@ -665,12 +662,12 @@ static fe_Object* argstoenv(fe_Context* ctx,
     res = fe_bool(ctx, number(va) op number(vb)); \
   }
 
-static fe_Object* eval(fe_Context* ctx,
-                       fe_Object* obj,
-                       fe_Object* env,
-                       fe_Object** newenv) {
-  fe_Object *fn, *arg, *res;
-  fe_Object cl, *va, *vb;
+static FeObject* eval(FeContext* ctx,
+                      FeObject* obj,
+                      FeObject* env,
+                      FeObject** newenv) {
+  FeObject *fn, *arg, *res;
+  FeObject cl, *va, *vb;
   size_t n, gc;
 
   if (type(obj) == FE_TSYMBOL) {
@@ -854,23 +851,23 @@ static fe_Object* eval(fe_Context* ctx,
   return res;
 }
 
-fe_Object* fe_eval(fe_Context* ctx, fe_Object* obj) {
+FeObject* fe_eval(FeContext* ctx, FeObject* obj) {
   return eval(ctx, obj, &nil, NULL);
 }
 
-fe_Context* fe_open(void* ptr, size_t size) {
+FeContext* fe_open(void* ptr, size_t size) {
   size_t i, save;
-  fe_Context* ctx;
+  FeContext* ctx;
 
   /* init context struct */
   ctx = ptr;
-  memset(ctx, 0, sizeof(fe_Context));
-  ptr = (char*)ptr + sizeof(fe_Context);
-  size -= sizeof(fe_Context);
+  memset(ctx, 0, sizeof(FeContext));
+  ptr = (char*)ptr + sizeof(FeContext);
+  size -= sizeof(FeContext);
 
   /* init objects memory region */
-  ctx->objects = (fe_Object*)ptr;
-  ctx->object_count = size / sizeof(fe_Object);
+  ctx->objects = (FeObject*)ptr;
+  ctx->object_count = size / sizeof(FeObject);
 
   /* init lists */
   ctx->calllist = &nil;
@@ -879,7 +876,7 @@ fe_Context* fe_open(void* ptr, size_t size) {
 
   /* populate freelist */
   for (i = 0; i < ctx->object_count; i++) {
-    fe_Object* obj = &ctx->objects[i];
+    FeObject* obj = &ctx->objects[i];
     settype(obj, FE_TFREE);
     cdr(obj) = ctx->freelist;
     ctx->freelist = obj;
@@ -892,7 +889,7 @@ fe_Context* fe_open(void* ptr, size_t size) {
   /* register built in primitives */
   save = fe_savegc(ctx);
   for (i = 0; i < P_MAX; i++) {
-    fe_Object* v = object(ctx);
+    FeObject* v = object(ctx);
     settype(v, FE_TPRIM);
     prim(v) = (char)i;
     fe_set(ctx, fe_symbol(ctx, primnames[i]), v);
@@ -902,7 +899,7 @@ fe_Context* fe_open(void* ptr, size_t size) {
   return ctx;
 }
 
-void fe_close(fe_Context* ctx) {
+void fe_close(FeContext* ctx) {
   /* clear gcstack and symlist; makes all objects unreachable */
   ctx->gcstack_idx = 0;
   ctx->symlist = &nil;

@@ -14,13 +14,13 @@ static jmp_buf top_level;
 // TODO: Make this a command line option.
 static char arena[64000];
 
-static void noreturn onerror(fe_Context*, const char* message, fe_Object*) {
+static void noreturn onerror(FeContext*, const char* message, FeObject*) {
   fprintf(stderr, "error: %s\n", message);
   longjmp(top_level, -1);
 }
 
 int main(int count, char* arguments[]) {
-  fe_Context* ctx = fe_open(arena, sizeof(arena));
+  FeContext* ctx = fe_open(arena, sizeof(arena));
 
   /* init input file */
   FILE* input = stdin;
@@ -43,7 +43,7 @@ int main(int count, char* arguments[]) {
     if (input == stdin) {
       printf("fe > ");
     }
-    fe_Object* obj = fe_readfp(ctx, input);
+    FeObject* obj = fe_readfp(ctx, input);
     if (obj == NULL) {
       break;
     }
