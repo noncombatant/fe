@@ -27,12 +27,12 @@
 * Portable ANSI C — works on 32- and 64-bit
 * Concise — about 1,000 sloc
 
----
+## Documentation
 
-* **[Demo Scripts](scripts)**
-* **[C API Overview](doc/capi.md)**
-* **[Language Overview](doc/lang.md)**
-* **[Implementation Overview](doc/impl.md)**
+* [Demo Scripts](scripts)
+* [C API Overview](doc/c-api.md)
+* [Language Overview](doc/language.md)
+* [Implementation Overview](doc/implementation.md)
 
 ## Contributing
 
