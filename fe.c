@@ -2,8 +2,11 @@
 // Copyright 2022 Chris Palmer, https://noncombatant.org/
 // SPDX-License-Identifier: MIT
 
+#include <assert.h>
 #include <float.h>
+#include <limits.h>
 #include <math.h>
+#include <stdarg.h>
 #include <stdnoreturn.h>
 #include <string.h>
 
@@ -94,6 +97,27 @@ FeHandlers* FeGetHandlers(FeContext* ctx) {
   return &ctx->handlers;
 }
 
+static void Format(char* result, size_t size, const char* format, ...)
+#pragma clang diagnostic push
+#pragma clang diagnostic ignored "-Wgcc-compat"
+    __attribute((format(printf, 3, 4))) {
+#pragma clang diagnostic pop
+  assert(size < INT_MAX);
+  assert(size > 0);
+  assert(result != NULL);
+  assert(format != NULL);
+
+  va_list arguments;
+  va_start(arguments, format);
+#pragma clang diagnostic push
+#pragma clang diagnostic ignored "-Wformat-nonliteral"
+  const int count = vsnprintf(result, size, format, arguments);
+#pragma clang diagnostic pop
+  va_end(arguments);
+  assert(count > 0);
+  assert(count < INT_MAX);
+}
+
 void noreturn FeHandleError(FeContext* ctx, const char* msg) {
   FeObject* cl = ctx->call_list;
   // reset context state:
@@ -126,8 +150,8 @@ FeObject* FeGetNextArgument(FeContext* ctx, FeObject** arg) {
 static FeObject* CheckType(FeContext* ctx, FeObject* obj, int type) {
   if (TYPE(obj) != type) {
     char message[64];
-    snprintf(message, sizeof(message), "expected %s, got %s", type_names[type],
-             type_names[TYPE(obj)]);
+    Format(message, sizeof(message), "expected %s, got %s", type_names[type],
+           type_names[TYPE(obj)]);
     FeHandleError(ctx, message);
   }
   return obj;
@@ -397,7 +421,7 @@ void FeWrite(FeContext* ctx, FeObject* obj, FeWriteFn fn, void* udata, int qt) {
       break;
 
     case FE_TNUMBER:
-      snprintf(buf, sizeof(buf), "%.7g", NUMBER(obj));
+      Format(buf, sizeof(buf), "%.7g", NUMBER(obj));
       WriteString(ctx, fn, udata, buf);
       break;
 
@@ -442,7 +466,7 @@ void FeWrite(FeContext* ctx, FeObject* obj, FeWriteFn fn, void* udata, int qt) {
       break;
 
     default:
-      snprintf(buf, sizeof(buf), "[%s %p]", type_names[TYPE(obj)], (void*)obj);
+      Format(buf, sizeof(buf), "[%s %p]", type_names[TYPE(obj)], (void*)obj);
       WriteString(ctx, fn, udata, buf);
       break;
   }
