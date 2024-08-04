@@ -82,7 +82,7 @@ struct FeContext {
   FeObject* freelist;
   FeObject* symlist;
   FeObject* t;
-  int nextchr;
+  char nextchr;
 };
 
 static FeObject nil = {{(void*)(FE_TNIL << 2 | 1)}, {NULL}};
