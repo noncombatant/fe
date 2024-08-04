@@ -13,7 +13,7 @@
 
 static jmp_buf top_level;
 
-static void noreturn onerror(FeContext*, const char* message, FeObject*) {
+static void noreturn HandleError(FeContext*, const char* message, FeObject*) {
   fprintf(stderr, "error: %s\n", message);
   longjmp(top_level, -1);
 }
@@ -24,6 +24,7 @@ static void noreturn PrintHelp(int status) {
 }
 
 int main(int count, char* arguments[]) {
+  // Parse command line options:
   size_t arena_size = 64 * 1024;
   while (true) {
     int ch = getopt(count, arguments, "hs:");
@@ -48,6 +49,7 @@ int main(int count, char* arguments[]) {
   count -= optind;
   arguments += optind;
 
+  // Initialize the context:
   char* arena = malloc(arena_size);
   FeContext* ctx = fe_open(arena, arena_size);
 
@@ -60,12 +62,12 @@ int main(int count, char* arguments[]) {
   }
 
   if (input == stdin) {
-    fe_handlers(ctx)->error = onerror;
+    fe_handlers(ctx)->error = HandleError;
   }
   size_t gc = fe_savegc(ctx);
   setjmp(top_level);
 
-  /* re(p)l */
+  // REPL:
   while (true) {
     fe_restoregc(ctx, gc);
     if (input == stdin) {
