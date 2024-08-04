@@ -75,9 +75,9 @@ struct fe_Object {
 struct fe_Context {
   fe_Handlers handlers;
   fe_Object* gcstack[GCSTACKSIZE];
-  int gcstack_idx;
+  size_t gcstack_idx;
   fe_Object* objects;
-  int object_count;
+  size_t object_count;
   fe_Object* calllist;
   fe_Object* freelist;
   fe_Object* symlist;
@@ -147,11 +147,11 @@ void fe_pushgc(fe_Context* ctx, fe_Object* obj) {
   ctx->gcstack[ctx->gcstack_idx++] = obj;
 }
 
-void fe_restoregc(fe_Context* ctx, int idx) {
+void fe_restoregc(fe_Context* ctx, size_t idx) {
   ctx->gcstack_idx = idx;
 }
 
-int fe_savegc(fe_Context* ctx) {
+size_t fe_savegc(fe_Context* ctx) {
   return ctx->gcstack_idx;
 }
 
@@ -184,7 +184,7 @@ begin:
 }
 
 static void collectgarbage(fe_Context* ctx) {
-  int i;
+  size_t i;
   /* mark */
   for (i = 0; i < ctx->gcstack_idx; i++) {
     fe_mark(ctx, ctx->gcstack[i]);
@@ -671,7 +671,7 @@ static fe_Object* eval(fe_Context* ctx,
                        fe_Object** newenv) {
   fe_Object *fn, *arg, *res;
   fe_Object cl, *va, *vb;
-  int n, gc;
+  size_t n, gc;
 
   if (type(obj) == FE_TSYMBOL) {
     return cdr(getbound(obj, env));
@@ -858,8 +858,8 @@ fe_Object* fe_eval(fe_Context* ctx, fe_Object* obj) {
   return eval(ctx, obj, &nil, NULL);
 }
 
-fe_Context* fe_open(void* ptr, int size) {
-  int i, save;
+fe_Context* fe_open(void* ptr, size_t size) {
+  size_t i, save;
   fe_Context* ctx;
 
   /* init context struct */
@@ -894,7 +894,7 @@ fe_Context* fe_open(void* ptr, int size) {
   for (i = 0; i < P_MAX; i++) {
     fe_Object* v = object(ctx);
     settype(v, FE_TPRIM);
-    prim(v) = i;
+    prim(v) = (char)i;
     fe_set(ctx, fe_symbol(ctx, primnames[i]), v);
     fe_restoregc(ctx, save);
   }

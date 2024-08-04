@@ -19,7 +19,7 @@ static void noreturn onerror(fe_Context*, const char* message, fe_Object*) {
 }
 
 int main(int count, char* arguments[]) {
-  int gc;
+  size_t gc;
   fe_Object* obj;
   FILE* fp = stdin;
   fe_Context* ctx = fe_open(arena, sizeof(arena));

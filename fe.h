@@ -38,19 +38,19 @@ enum {
   FE_TPTR
 };
 
-fe_Context* fe_open(void* ptr, int size);
+fe_Context* fe_open(void* ptr, size_t size);
 void fe_close(fe_Context* ctx);
 fe_Handlers* fe_handlers(fe_Context* ctx);
 void fe_error(fe_Context* ctx, const char* msg);
 fe_Object* fe_nextarg(fe_Context* ctx, fe_Object** arg);
-int fe_type(fe_Context* ctx, fe_Object* obj);
-int fe_isnil(fe_Context* ctx, fe_Object* obj);
+int fe_type(fe_Context* ctx, fe_Object* obj);   // TODO enum return
+int fe_isnil(fe_Context* ctx, fe_Object* obj);  // TODO bool
 void fe_pushgc(fe_Context* ctx, fe_Object* obj);
-void fe_restoregc(fe_Context* ctx, int idx);
-int fe_savegc(fe_Context* ctx);
+void fe_restoregc(fe_Context* ctx, size_t idx);
+size_t fe_savegc(fe_Context* ctx);
 void fe_mark(fe_Context* ctx, fe_Object* obj);
 fe_Object* fe_cons(fe_Context* ctx, fe_Object* car, fe_Object* cdr);
-fe_Object* fe_bool(fe_Context* ctx, int b);
+fe_Object* fe_bool(fe_Context* ctx, int b);  // TODO use `bool`
 fe_Object* fe_number(fe_Context* ctx, fe_Number n);
 fe_Object* fe_string(fe_Context* ctx, const char* str);
 fe_Object* fe_symbol(fe_Context* ctx, const char* name);
