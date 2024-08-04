@@ -10,6 +10,7 @@
 #include <unistd.h>
 
 #include "fe.h"
+#include "fex.h"
 
 static jmp_buf top_level;
 
@@ -52,6 +53,7 @@ int main(int count, char* arguments[]) {
   // Initialize the context:
   char* arena = malloc(arena_size);
   FeContext* ctx = FeOpenContext(arena, arena_size);
+  FexInstallNativeFns(ctx);
 
   FILE* input = stdin;
   if (count > 0) {

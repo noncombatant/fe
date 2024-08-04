@@ -17,7 +17,7 @@ test: fe
 run: fe
 	./fe
 
-fe: main.c fe.o
+fe: main.c fe.o fex.o
 	$(CC) $(CFLAGS) -o $@ $^
 
 clean:
