@@ -701,7 +701,8 @@ static FeObject* eval(FeContext* ctx,
     return obj;
   }
 
-  car(&cl) = obj, cdr(&cl) = ctx->calllist;
+  car(&cl) = obj;
+  cdr(&cl) = ctx->calllist;
   ctx->calllist = &cl;
 
   gc = fe_savegc(ctx);
