@@ -504,15 +504,8 @@ void FeSet(FeContext*, FeObject* sym, FeObject* v) {
 static FeObject rparen;
 
 static FeObject* Read(FeContext* ctx, FeReadFn fn, void* udata) {
-  const char* delimiter = " \n\t\r();";
-  FeObject *v, *res, **tail;
-  FeNumber n;
-  char chr;
-  size_t gc;
-  char buf[64], *p;
-
   /* get next character */
-  chr = ctx->nextchr ? ctx->nextchr : fn(ctx, udata);
+  char chr = ctx->nextchr ? ctx->nextchr : fn(ctx, udata);
   ctx->nextchr = '\0';
 
   /* skip whitespace */
@@ -533,11 +526,12 @@ static FeObject* Read(FeContext* ctx, FeReadFn fn, void* udata) {
     case ')':
       return &rparen;
 
-    case '(':
-      res = &nil;
-      tail = &res;
-      gc = FeSaveGC(ctx);
+    case '(': {
+      FeObject* res = &nil;
+      FeObject** tail = &res;
+      size_t gc = FeSaveGC(ctx);
       FePushGC(ctx, res); /* to cause error on too-deep nesting */
+      FeObject* v;
       while ((v = Read(ctx, fn, udata)) != &rparen) {
         if (v == NULL) {
           FeHandleError(ctx, "unclosed list");
@@ -554,17 +548,19 @@ static FeObject* Read(FeContext* ctx, FeReadFn fn, void* udata) {
         FePushGC(ctx, res);
       }
       return res;
+    }
 
-    case '\'':
-      v = FeRead(ctx, fn, udata);
-      if (!v) {
+    case '\'': {
+      FeObject* v = FeRead(ctx, fn, udata);
+      if (v == NULL) {
         FeHandleError(ctx, "stray '''");
       }
       return FeCons(ctx, FeMakeSymbol(ctx, "quote"), FeCons(ctx, v, &nil));
+    }
 
-    case '"':
-      res = BuildString(ctx, NULL, '\0');
-      v = res;
+    case '"': {
+      FeObject* res = BuildString(ctx, NULL, '\0');
+      FeObject* v = res;
       chr = fn(ctx, udata);
       while (chr != '"') {
         if (chr == '\0') {
@@ -580,9 +576,12 @@ static FeObject* Read(FeContext* ctx, FeReadFn fn, void* udata) {
         chr = fn(ctx, udata);
       }
       return res;
+    }
 
-    default:
-      p = buf;
+    default: {
+      char buf[64];
+      char* p = buf;
+      const char* delimiter = " \n\t\r();";
       do {
         if (p == buf + sizeof(buf) - 1) {
           FeHandleError(ctx, "symbol too long");
@@ -592,14 +591,18 @@ static FeObject* Read(FeContext* ctx, FeReadFn fn, void* udata) {
       } while (chr && !strchr(delimiter, chr));
       *p = '\0';
       ctx->nextchr = chr;
-      n = strtod(buf, &p); /* try to read as number */
+      // Try to read it as a number:
+      FeNumber n = strtod(buf, &p);
       if (p != buf && strchr(delimiter, *p)) {
         return FeMakeNumber(ctx, n);
       }
+      // Try to read it as nil:
       if (!strcmp(buf, "nil")) {
         return &nil;
       }
+      // It's a symbol:
       return FeMakeSymbol(ctx, buf);
+    }
   }
 }
 
