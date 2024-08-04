@@ -1,7 +1,8 @@
 CC = clang
 CFLAGS = -Weverything -std=c2x \
   -Wno-poison-system-directories \
-  -Wno-declaration-after-statement
+  -Wno-declaration-after-statement \
+  -Wno-padded
 
 # Sometimes -O3 catches more warnings:
 CFLAGS += -O3 -fsanitize=undefined

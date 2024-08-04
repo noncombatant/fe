@@ -2,8 +2,10 @@
 // Copyright 2022 Chris Palmer, https://noncombatant.org/
 // SPDX-License-Identifier: MIT
 
-#include "fe.h"
+#include <stdnoreturn.h>
 #include <string.h>
+
+#include "fe.h"
 
 #define car(x) ((x)->car.o)
 #define cdr(x) ((x)->cdr.o)
@@ -89,7 +91,7 @@ fe_Handlers* fe_handlers(fe_Context* ctx) {
   return &ctx->handlers;
 }
 
-void fe_error(fe_Context* ctx, const char* msg) {
+void noreturn fe_error(fe_Context* ctx, const char* msg) {
   fe_Object* cl = ctx->calllist;
   /* reset context state */
   ctx->calllist = &nil;
