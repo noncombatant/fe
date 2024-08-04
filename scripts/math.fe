@@ -1,3 +1,5 @@
+(print (abs -200))
+(print (abs 200))
 (print (max 42 77))
 (print (min 42 77))
 (print (pow 2 3))

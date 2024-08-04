@@ -10,9 +10,15 @@ void FexInstallNativeFn(FeContext* ctx, const char* name, FeCFunc fn) {
 }
 
 void FexInstallNativeFns(FeContext* ctx) {
+  FexInstallNativeFn(ctx, "abs", FexAbs);
   FexInstallNativeFn(ctx, "max", FexMax);
   FexInstallNativeFn(ctx, "min", FexMin);
   FexInstallNativeFn(ctx, "pow", FexPow);
+}
+
+FeObject* FexAbs(FeContext* ctx, FeObject* arg) {
+  double x = FeToNumber(ctx, FeGetNextArgument(ctx, &arg));
+  return FeMakeNumber(ctx, fabs(x));
 }
 
 FeObject* FexMax(FeContext* ctx, FeObject* arg) {
