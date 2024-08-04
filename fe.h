@@ -61,7 +61,7 @@ FeObject* FeMakeString(FeContext* ctx, const char* str);
 FeObject* FeMakeSymbol(FeContext* ctx, const char* name);
 FeObject* FeMakeCFunc(FeContext* ctx, FeCFunc fn);
 FeObject* FeMakePtr(FeContext* ctx, void* ptr);
-FeObject* FeMakeList(FeContext* ctx, FeObject** objs, int n);
+FeObject* FeMakeList(FeContext* ctx, FeObject** objs, size_t n);
 
 FeObject* FeCar(FeContext* ctx, FeObject* obj);
 FeObject* FeCdr(FeContext* ctx, FeObject* obj);

@@ -358,7 +358,7 @@ FeObject* FeMakePtr(FeContext* ctx, void* ptr) {
   return obj;
 }
 
-FeObject* FeMakeList(FeContext* ctx, FeObject** objs, int n) {  // TODO size_t
+FeObject* FeMakeList(FeContext* ctx, FeObject** objs, size_t n) {
   FeObject* res = &nil;
   while (n--) {
     res = FeCons(ctx, objs[n], res);
