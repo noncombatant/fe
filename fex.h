@@ -15,6 +15,8 @@ FeObject* FexIsFinite(FeContext* ctx, FeObject* arg);
 FeObject* FexIsInfinite(FeContext* ctx, FeObject* arg);
 FeObject* FexIsNaN(FeContext* ctx, FeObject* arg);
 FeObject* FexIsNormal(FeContext* ctx, FeObject* arg);
+FeObject* FexLg(FeContext* ctx, FeObject* arg);
+FeObject* FexLog(FeContext* ctx, FeObject* arg);
 FeObject* FexMax(FeContext* ctx, FeObject* arg);
 FeObject* FexMin(FeContext* ctx, FeObject* arg);
 FeObject* FexModulus(FeContext* ctx, FeObject* arg);

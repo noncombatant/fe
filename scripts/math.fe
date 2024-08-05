@@ -8,6 +8,8 @@
 (print (is-infinite 42.6))
 (print (is-nan 42.6))
 (print (is-normal 42.6))
+(print (lg 8))
+(print (log 8))
 (print (max 42 77))
 (print (min 42 77))
 (print (% 42 5))

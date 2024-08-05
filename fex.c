@@ -19,6 +19,8 @@ void FexInstallNativeFns(FeContext* ctx) {
   FexInstallNativeFn(ctx, "is-infinite", FexIsInfinite);
   FexInstallNativeFn(ctx, "is-nan", FexIsNaN);
   FexInstallNativeFn(ctx, "is-normal", FexIsNormal);
+  FexInstallNativeFn(ctx, "lg", FexLg);
+  FexInstallNativeFn(ctx, "log", FexLog);
   FexInstallNativeFn(ctx, "max", FexMax);
   FexInstallNativeFn(ctx, "min", FexMin);
   FexInstallNativeFn(ctx, "%", FexModulus);
@@ -75,6 +77,16 @@ FeObject* FexIsNaN(FeContext* ctx, FeObject* arg) {
 FeObject* FexIsNormal(FeContext* ctx, FeObject* arg) {
   double x = FeToNumber(ctx, FeGetNextArgument(ctx, &arg));
   return FeMakeBool(ctx, isnormal(x));
+}
+
+FeObject* FexLg(FeContext* ctx, FeObject* arg) {
+  double x = FeToNumber(ctx, FeGetNextArgument(ctx, &arg));
+  return FeMakeNumber(ctx, log2(x));
+}
+
+FeObject* FexLog(FeContext* ctx, FeObject* arg) {
+  double x = FeToNumber(ctx, FeGetNextArgument(ctx, &arg));
+  return FeMakeNumber(ctx, log(x));
 }
 
 FeObject* FexMax(FeContext* ctx, FeObject* arg) {
