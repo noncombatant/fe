@@ -1,6 +1,9 @@
 // Copyright 2024 Chris Palmer, https://noncombatant.org/
 // SPDX-License-Identifier: MIT
 
+#ifndef FEX_H
+#define FEX_H
+
 #include "fe.h"
 
 void FexInstallNativeFn(FeContext* ctx, const char* name, FeNativeFn fn);
@@ -27,3 +30,5 @@ FeObject* FexRound(FeContext* ctx, FeObject* arg);
 FeObject* FexRoundToInt(FeContext* ctx, FeObject* arg);
 FeObject* FexSquareRoot(FeContext* ctx, FeObject* arg);
 FeObject* FexTruncate(FeContext* ctx, FeObject* arg);
+
+#endif
