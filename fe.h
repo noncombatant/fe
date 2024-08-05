@@ -25,19 +25,19 @@ typedef struct {
   FeNativeFn* gc;
 } FeHandlers;
 
-enum {
-  FE_TPAIR,
-  FE_TFREE,
-  FE_TNIL,
-  FE_TNUMBER,
-  FE_TSYMBOL,
-  FE_TSTRING,
-  FE_TFN,
-  FE_TMACRO,
-  FE_TPRIM,
-  FE_TNATIVE_FN,
-  FE_TPTR
-};
+typedef enum FeType {
+  FeTPair,
+  FeTFree,
+  FeTNil,
+  FeTNumber,
+  FeTSymbol,
+  FeTString,
+  FeTFn,
+  FeTMacro,
+  FeTPrimitive,
+  FeTNativeFn,
+  FeTPtr
+} FeType;
 
 FeContext* FeOpenContext(void* ptr, size_t size);
 void FeCloseContext(FeContext* ctx);
