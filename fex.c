@@ -12,17 +12,22 @@ void FexInstallNativeFn(FeContext* ctx, const char* name, FeNativeFn fn) {
 void FexInstallNativeFns(FeContext* ctx) {
   FexInstallNativeFn(ctx, "abs", FexAbs);
   FexInstallNativeFn(ctx, "ceiling", FexCeiling);
+  FexInstallNativeFn(ctx, "cube-root", FexCubeRoot);
   FexInstallNativeFn(ctx, "floor", FexFloor);
+  FexInstallNativeFn(ctx, "hypotenuse", FexHypotenuse);
   FexInstallNativeFn(ctx, "is-finite", FexIsFinite);
   FexInstallNativeFn(ctx, "is-infinite", FexIsInfinite);
   FexInstallNativeFn(ctx, "is-nan", FexIsNaN);
   FexInstallNativeFn(ctx, "is-normal", FexIsNormal);
   FexInstallNativeFn(ctx, "max", FexMax);
   FexInstallNativeFn(ctx, "min", FexMin);
+  FexInstallNativeFn(ctx, "%", FexModulus);
   FexInstallNativeFn(ctx, "nearby-int", FexNearbyInt);
   FexInstallNativeFn(ctx, "pow", FexPow);
+  FexInstallNativeFn(ctx, "remainder", FexRemainder);
   FexInstallNativeFn(ctx, "round", FexRound);
   FexInstallNativeFn(ctx, "round-to-int", FexRoundToInt);
+  FexInstallNativeFn(ctx, "square-root", FexSquareRoot);
   FexInstallNativeFn(ctx, "trunc", FexTruncate);
 }
 
@@ -36,9 +41,20 @@ FeObject* FexCeiling(FeContext* ctx, FeObject* arg) {
   return FeMakeNumber(ctx, ceil(x));
 }
 
+FeObject* FexCubeRoot(FeContext* ctx, FeObject* arg) {
+  double x = FeToNumber(ctx, FeGetNextArgument(ctx, &arg));
+  return FeMakeNumber(ctx, cbrt(x));
+}
+
 FeObject* FexFloor(FeContext* ctx, FeObject* arg) {
   double x = FeToNumber(ctx, FeGetNextArgument(ctx, &arg));
   return FeMakeNumber(ctx, floor(x));
+}
+
+FeObject* FexHypotenuse(FeContext* ctx, FeObject* arg) {
+  double x = FeToNumber(ctx, FeGetNextArgument(ctx, &arg));
+  double y = FeToNumber(ctx, FeGetNextArgument(ctx, &arg));
+  return FeMakeNumber(ctx, hypot(x, y));
 }
 
 FeObject* FexIsFinite(FeContext* ctx, FeObject* arg) {
@@ -73,6 +89,12 @@ FeObject* FexMin(FeContext* ctx, FeObject* arg) {
   return FeMakeNumber(ctx, fmin(x, y));
 }
 
+FeObject* FexModulus(FeContext* ctx, FeObject* arg) {
+  double x = FeToNumber(ctx, FeGetNextArgument(ctx, &arg));
+  double y = FeToNumber(ctx, FeGetNextArgument(ctx, &arg));
+  return FeMakeNumber(ctx, fmod(x, y));
+}
+
 // FeObject* FexNaN(FeContext* ctx, FeObject* arg) {
 //   char tag[64];
 //   (void)FeToString(ctx, FeGetNextArgument(ctx, &arg), tag, sizeof(tag));
@@ -90,6 +112,12 @@ FeObject* FexPow(FeContext* ctx, FeObject* arg) {
   return FeMakeNumber(ctx, pow(x, y));
 }
 
+FeObject* FexRemainder(FeContext* ctx, FeObject* arg) {
+  double x = FeToNumber(ctx, FeGetNextArgument(ctx, &arg));
+  double y = FeToNumber(ctx, FeGetNextArgument(ctx, &arg));
+  return FeMakeNumber(ctx, remainder(x, y));
+}
+
 FeObject* FexRound(FeContext* ctx, FeObject* arg) {
   double x = FeToNumber(ctx, FeGetNextArgument(ctx, &arg));
   return FeMakeNumber(ctx, round(x));
@@ -98,6 +126,11 @@ FeObject* FexRound(FeContext* ctx, FeObject* arg) {
 FeObject* FexRoundToInt(FeContext* ctx, FeObject* arg) {
   double x = FeToNumber(ctx, FeGetNextArgument(ctx, &arg));
   return FeMakeNumber(ctx, rint(x));
+}
+
+FeObject* FexSquareRoot(FeContext* ctx, FeObject* arg) {
+  double x = FeToNumber(ctx, FeGetNextArgument(ctx, &arg));
+  return FeMakeNumber(ctx, sqrt(x));
 }
 
 FeObject* FexTruncate(FeContext* ctx, FeObject* arg) {
