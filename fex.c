@@ -31,6 +31,8 @@ void FexInstallNativeFns(FeContext* ctx) {
   FexInstallNativeFn(ctx, "round-to-int", FexRoundToInt);
   FexInstallNativeFn(ctx, "square-root", FexSquareRoot);
   FexInstallNativeFn(ctx, "trunc", FexTruncate);
+
+  FeSet(ctx, FeMakeSymbol(ctx, "pi"), FeMakeNumber(ctx, M_PI));
 }
 
 FeObject* FexAbs(FeContext* ctx, FeObject* arg) {
