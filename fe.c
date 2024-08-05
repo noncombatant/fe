@@ -12,14 +12,6 @@
 
 #include "fe.h"
 
-#define CAR(x) ((x)->car.o)
-#define CDR(x) ((x)->cdr.o)
-#define TAG(x) ((x)->car.c)
-#define NUMBER(x) ((x)->cdr.n)
-#define PRIM(x) ((x)->cdr.c)
-#define NATIVE_FN(x) ((x)->cdr.f)
-#define STRING_BUFFER(x) (&(x)->car.c + 1)
-
 #define STRING_BUFFER_SIZE (sizeof(FeObject*) - 1)
 #define GC_MARK_BIT (0x2)
 // TODO: This should scale with arena size.
@@ -76,6 +68,14 @@ struct FeObject {
 };
 
 static FeObject nil = {{(void*)(FE_TNIL << 2 | 1)}, {NULL}};
+
+#define CAR(x) ((x)->car.o)
+#define CDR(x) ((x)->cdr.o)
+#define TAG(x) ((x)->car.c)
+#define NUMBER(x) ((x)->cdr.n)
+#define PRIM(x) ((x)->cdr.c)
+#define NATIVE_FN(x) ((x)->cdr.f)
+#define STRING_BUFFER(x) (&(x)->car.c + 1)
 
 static FeNumber GetNumber(const FeObject* o) {
   return o->cdr.n;
