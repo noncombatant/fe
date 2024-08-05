@@ -26,7 +26,8 @@
 
 #define STRING_BUFFER_SIZE (sizeof(FeObject*) - 1)
 #define GC_MARK_BIT (0x2)
-#define GC_STACK_SIZE (256)
+// TODO: This should scale with arena size.
+#define GC_STACK_SIZE (512)
 
 enum {
   P_LET,
