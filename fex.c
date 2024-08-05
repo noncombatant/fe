@@ -32,122 +32,122 @@ void FexInstallNativeFns(FeContext* ctx) {
   FexInstallNativeFn(ctx, "square-root", FexSquareRoot);
   FexInstallNativeFn(ctx, "trunc", FexTruncate);
 
-  FeSet(ctx, FeMakeSymbol(ctx, "pi"), FeMakeNumber(ctx, M_PI));
+  FeSet(ctx, FeMakeSymbol(ctx, "pi"), FeMakeDouble(ctx, M_PI));
 }
 
 FeObject* FexAbs(FeContext* ctx, FeObject* arg) {
-  double x = FeToNumber(ctx, FeGetNextArgument(ctx, &arg));
-  return FeMakeNumber(ctx, fabs(x));
+  double x = FeToDouble(ctx, FeGetNextArgument(ctx, &arg));
+  return FeMakeDouble(ctx, fabs(x));
 }
 
 FeObject* FexCeiling(FeContext* ctx, FeObject* arg) {
-  double x = FeToNumber(ctx, FeGetNextArgument(ctx, &arg));
-  return FeMakeNumber(ctx, ceil(x));
+  double x = FeToDouble(ctx, FeGetNextArgument(ctx, &arg));
+  return FeMakeDouble(ctx, ceil(x));
 }
 
 FeObject* FexCubeRoot(FeContext* ctx, FeObject* arg) {
-  double x = FeToNumber(ctx, FeGetNextArgument(ctx, &arg));
-  return FeMakeNumber(ctx, cbrt(x));
+  double x = FeToDouble(ctx, FeGetNextArgument(ctx, &arg));
+  return FeMakeDouble(ctx, cbrt(x));
 }
 
 FeObject* FexFloor(FeContext* ctx, FeObject* arg) {
-  double x = FeToNumber(ctx, FeGetNextArgument(ctx, &arg));
-  return FeMakeNumber(ctx, floor(x));
+  double x = FeToDouble(ctx, FeGetNextArgument(ctx, &arg));
+  return FeMakeDouble(ctx, floor(x));
 }
 
 FeObject* FexHypotenuse(FeContext* ctx, FeObject* arg) {
-  double x = FeToNumber(ctx, FeGetNextArgument(ctx, &arg));
-  double y = FeToNumber(ctx, FeGetNextArgument(ctx, &arg));
-  return FeMakeNumber(ctx, hypot(x, y));
+  double x = FeToDouble(ctx, FeGetNextArgument(ctx, &arg));
+  double y = FeToDouble(ctx, FeGetNextArgument(ctx, &arg));
+  return FeMakeDouble(ctx, hypot(x, y));
 }
 
 FeObject* FexIsFinite(FeContext* ctx, FeObject* arg) {
-  double x = FeToNumber(ctx, FeGetNextArgument(ctx, &arg));
+  double x = FeToDouble(ctx, FeGetNextArgument(ctx, &arg));
   return FeMakeBool(ctx, isfinite(x));
 }
 
 FeObject* FexIsInfinite(FeContext* ctx, FeObject* arg) {
-  double x = FeToNumber(ctx, FeGetNextArgument(ctx, &arg));
+  double x = FeToDouble(ctx, FeGetNextArgument(ctx, &arg));
   return FeMakeBool(ctx, isinf(x));
 }
 
 FeObject* FexIsNaN(FeContext* ctx, FeObject* arg) {
-  double x = FeToNumber(ctx, FeGetNextArgument(ctx, &arg));
+  double x = FeToDouble(ctx, FeGetNextArgument(ctx, &arg));
   return FeMakeBool(ctx, isnan(x));
 }
 
 FeObject* FexIsNormal(FeContext* ctx, FeObject* arg) {
-  double x = FeToNumber(ctx, FeGetNextArgument(ctx, &arg));
+  double x = FeToDouble(ctx, FeGetNextArgument(ctx, &arg));
   return FeMakeBool(ctx, isnormal(x));
 }
 
 FeObject* FexLg(FeContext* ctx, FeObject* arg) {
-  double x = FeToNumber(ctx, FeGetNextArgument(ctx, &arg));
-  return FeMakeNumber(ctx, log2(x));
+  double x = FeToDouble(ctx, FeGetNextArgument(ctx, &arg));
+  return FeMakeDouble(ctx, log2(x));
 }
 
 FeObject* FexLog(FeContext* ctx, FeObject* arg) {
-  double x = FeToNumber(ctx, FeGetNextArgument(ctx, &arg));
-  return FeMakeNumber(ctx, log(x));
+  double x = FeToDouble(ctx, FeGetNextArgument(ctx, &arg));
+  return FeMakeDouble(ctx, log(x));
 }
 
 FeObject* FexMax(FeContext* ctx, FeObject* arg) {
-  double x = FeToNumber(ctx, FeGetNextArgument(ctx, &arg));
-  double y = FeToNumber(ctx, FeGetNextArgument(ctx, &arg));
-  return FeMakeNumber(ctx, fmax(x, y));
+  double x = FeToDouble(ctx, FeGetNextArgument(ctx, &arg));
+  double y = FeToDouble(ctx, FeGetNextArgument(ctx, &arg));
+  return FeMakeDouble(ctx, fmax(x, y));
 }
 
 FeObject* FexMin(FeContext* ctx, FeObject* arg) {
-  double x = FeToNumber(ctx, FeGetNextArgument(ctx, &arg));
-  double y = FeToNumber(ctx, FeGetNextArgument(ctx, &arg));
-  return FeMakeNumber(ctx, fmin(x, y));
+  double x = FeToDouble(ctx, FeGetNextArgument(ctx, &arg));
+  double y = FeToDouble(ctx, FeGetNextArgument(ctx, &arg));
+  return FeMakeDouble(ctx, fmin(x, y));
 }
 
 FeObject* FexModulus(FeContext* ctx, FeObject* arg) {
-  double x = FeToNumber(ctx, FeGetNextArgument(ctx, &arg));
-  double y = FeToNumber(ctx, FeGetNextArgument(ctx, &arg));
-  return FeMakeNumber(ctx, fmod(x, y));
+  double x = FeToDouble(ctx, FeGetNextArgument(ctx, &arg));
+  double y = FeToDouble(ctx, FeGetNextArgument(ctx, &arg));
+  return FeMakeDouble(ctx, fmod(x, y));
 }
 
 // FeObject* FexNaN(FeContext* ctx, FeObject* arg) {
 //   char tag[64];
 //   (void)FeToString(ctx, FeGetNextArgument(ctx, &arg), tag, sizeof(tag));
-//   return FeMakeNumber(ctx, nan(tag));
+//   return FeMakeDouble(ctx, nan(tag));
 // }
 
 FeObject* FexNearbyInt(FeContext* ctx, FeObject* arg) {
-  double x = FeToNumber(ctx, FeGetNextArgument(ctx, &arg));
-  return FeMakeNumber(ctx, nearbyint(x));
+  double x = FeToDouble(ctx, FeGetNextArgument(ctx, &arg));
+  return FeMakeDouble(ctx, nearbyint(x));
 }
 
 FeObject* FexPow(FeContext* ctx, FeObject* arg) {
-  double x = FeToNumber(ctx, FeGetNextArgument(ctx, &arg));
-  double y = FeToNumber(ctx, FeGetNextArgument(ctx, &arg));
-  return FeMakeNumber(ctx, pow(x, y));
+  double x = FeToDouble(ctx, FeGetNextArgument(ctx, &arg));
+  double y = FeToDouble(ctx, FeGetNextArgument(ctx, &arg));
+  return FeMakeDouble(ctx, pow(x, y));
 }
 
 FeObject* FexRemainder(FeContext* ctx, FeObject* arg) {
-  double x = FeToNumber(ctx, FeGetNextArgument(ctx, &arg));
-  double y = FeToNumber(ctx, FeGetNextArgument(ctx, &arg));
-  return FeMakeNumber(ctx, remainder(x, y));
+  double x = FeToDouble(ctx, FeGetNextArgument(ctx, &arg));
+  double y = FeToDouble(ctx, FeGetNextArgument(ctx, &arg));
+  return FeMakeDouble(ctx, remainder(x, y));
 }
 
 FeObject* FexRound(FeContext* ctx, FeObject* arg) {
-  double x = FeToNumber(ctx, FeGetNextArgument(ctx, &arg));
-  return FeMakeNumber(ctx, round(x));
+  double x = FeToDouble(ctx, FeGetNextArgument(ctx, &arg));
+  return FeMakeDouble(ctx, round(x));
 }
 
 FeObject* FexRoundToInt(FeContext* ctx, FeObject* arg) {
-  double x = FeToNumber(ctx, FeGetNextArgument(ctx, &arg));
-  return FeMakeNumber(ctx, rint(x));
+  double x = FeToDouble(ctx, FeGetNextArgument(ctx, &arg));
+  return FeMakeDouble(ctx, rint(x));
 }
 
 FeObject* FexSquareRoot(FeContext* ctx, FeObject* arg) {
-  double x = FeToNumber(ctx, FeGetNextArgument(ctx, &arg));
-  return FeMakeNumber(ctx, sqrt(x));
+  double x = FeToDouble(ctx, FeGetNextArgument(ctx, &arg));
+  return FeMakeDouble(ctx, sqrt(x));
 }
 
 FeObject* FexTruncate(FeContext* ctx, FeObject* arg) {
-  double x = FeToNumber(ctx, FeGetNextArgument(ctx, &arg));
-  return FeMakeNumber(ctx, trunc(x));
+  double x = FeToDouble(ctx, FeGetNextArgument(ctx, &arg));
+  return FeMakeDouble(ctx, trunc(x));
 }

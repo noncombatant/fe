@@ -52,14 +52,14 @@ static const char* primitive_names[] = {
     "do",   "cons",  "car", "cdr", "setcar", "setcdr", "list",  "not", "is",
     "atom", "print", "<",   "<=",  "+",      "-",      "*",     "/"};
 
-static const char* type_names[] = {"pair",   "free",      "nil", "number",
+static const char* type_names[] = {"pair",   "free",      "nil", "double",
                                    "symbol", "string",    "fn",  "macro",
                                    "prim",   "native-fn", "ptr"};
 
 typedef union {
   FeObject* o;
   FeNativeFn* f;
-  FeNumber n;
+  FeDouble n;
   char c;
 } Value;
 
@@ -72,12 +72,12 @@ static FeObject nil = {{(void*)(FeTNil << 2 | 1)}, {NULL}};
 #define CAR(x) ((x)->car.o)
 #define CDR(x) ((x)->cdr.o)
 #define TAG(x) ((x)->car.c)
-#define NUMBER(x) ((x)->cdr.n)
+#define DOUBLE(x) ((x)->cdr.n)
 #define PRIM(x) ((x)->cdr.c)
 #define NATIVE_FN(x) ((x)->cdr.f)
 #define STRING_BUFFER(x) (&(x)->car.c + 1)
 
-static FeNumber GetNumber(const FeObject* o) {
+static FeDouble GetDouble(const FeObject* o) {
   return o->cdr.n;
 }
 
@@ -289,8 +289,8 @@ static bool Equal(FeObject* a, FeObject* b) {
   if (GetType(a) != GetType(b)) {
     return false;
   }
-  if (GetType(a) == FeTNumber) {
-    return IsNearlyEqual(GetNumber(a), GetNumber(b), DBL_EPSILON);
+  if (GetType(a) == FeTDouble) {
+    return IsNearlyEqual(GetDouble(a), GetDouble(b), DBL_EPSILON);
   }
   if (GetType(a) == FeTString) {
     for (; !IsNil(a); a = CDR(a), b = CDR(b)) {
@@ -344,10 +344,10 @@ FeObject* FeMakeBool(FeContext* ctx, bool b) {
   return b ? ctx->t : &nil;
 }
 
-FeObject* FeMakeNumber(FeContext* ctx, FeNumber n) {
+FeObject* FeMakeDouble(FeContext* ctx, FeDouble n) {
   FeObject* obj = MakeObject(ctx);
-  SetType(obj, FeTNumber);
-  NUMBER(obj) = n;
+  SetType(obj, FeTDouble);
+  DOUBLE(obj) = n;
   return obj;
 }
 
@@ -442,8 +442,8 @@ void FeWrite(FeContext* ctx, FeObject* obj, FeWriteFn fn, void* udata, int qt) {
       WriteString(ctx, fn, udata, "nil");
       break;
 
-    case FeTNumber:
-      Format(buf, sizeof(buf), "%.7g", GetNumber(obj));
+    case FeTDouble:
+      Format(buf, sizeof(buf), "%.7g", GetDouble(obj));
       WriteString(ctx, fn, udata, buf);
       break;
 
@@ -523,8 +523,8 @@ size_t FeToString(FeContext* ctx, FeObject* obj, char* dst, size_t size) {
   return size - x.n - 1;
 }
 
-FeNumber FeToNumber(FeContext* ctx, FeObject* obj) {
-  return GetNumber(CheckType(ctx, obj, FeTNumber));
+FeDouble FeToDouble(FeContext* ctx, FeObject* obj) {
+  return GetDouble(CheckType(ctx, obj, FeTDouble));
 }
 
 void* FeToPtr(FeContext* ctx, FeObject* obj) {
@@ -637,10 +637,10 @@ static FeObject* Read(FeContext* ctx, FeReadFn fn, void* udata) {
       } while (chr && !strchr(delimiter, chr));
       *p = '\0';
       ctx->nextchr = chr;
-      // Try to read it as a number:
-      FeNumber n = strtod(buf, &p);
+      // Try to read it as a double:
+      FeDouble n = strtod(buf, &p);
       if (p != buf && strchr(delimiter, *p)) {
-        return FeMakeNumber(ctx, n);
+        return FeMakeDouble(ctx, n);
       }
       // Try to read it as nil:
       if (!strcmp(buf, "nil")) {
@@ -717,18 +717,18 @@ static FeObject* ArgsToEnv(FeContext* ctx,
 
 #define ARITH_OP(op)                          \
   {                                           \
-    FeNumber x = FeToNumber(ctx, EVAL_ARG()); \
+    FeDouble x = FeToDouble(ctx, EVAL_ARG()); \
     while (!IsNil(arg)) {                     \
-      x = x op FeToNumber(ctx, EVAL_ARG());   \
+      x = x op FeToDouble(ctx, EVAL_ARG());   \
     }                                         \
-    res = FeMakeNumber(ctx, x);               \
+    res = FeMakeDouble(ctx, x);               \
   }
 
 #define NUM_CMP_OP(op)                                     \
   {                                                        \
-    va = CheckType(ctx, EVAL_ARG(), FeTNumber);            \
-    vb = CheckType(ctx, EVAL_ARG(), FeTNumber);            \
-    res = FeMakeBool(ctx, GetNumber(va) op GetNumber(vb)); \
+    va = CheckType(ctx, EVAL_ARG(), FeTDouble);            \
+    vb = CheckType(ctx, EVAL_ARG(), FeTDouble);            \
+    res = FeMakeBool(ctx, GetDouble(va) op GetDouble(vb)); \
   }
 
 static FeObject* Evaluate(FeContext* ctx,

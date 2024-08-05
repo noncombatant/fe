@@ -11,7 +11,7 @@
 
 #define FE_VERSION "1.0"
 
-typedef double FeNumber;
+typedef double FeDouble;
 typedef struct FeObject FeObject;
 typedef struct FeContext FeContext;
 typedef FeObject* FeNativeFn(FeContext* ctx, FeObject* args);
@@ -19,7 +19,7 @@ typedef void FeErrorFn(FeContext* ctx, const char* err, FeObject* cl);
 typedef void FeWriteFn(FeContext* ctx, void* udata, char chr);
 typedef char FeReadFn(FeContext* ctx, void* udata);
 
-typedef struct {
+typedef struct FeHandlers {
   FeErrorFn* error;
   FeNativeFn* mark;
   FeNativeFn* gc;
@@ -29,7 +29,7 @@ typedef enum FeType {
   FeTPair,
   FeTFree,
   FeTNil,
-  FeTNumber,
+  FeTDouble,
   FeTSymbol,
   FeTString,
   FeTFn,
@@ -56,7 +56,7 @@ void FeMark(FeContext* ctx, FeObject* obj);
 
 FeObject* FeCons(FeContext* ctx, FeObject* car, FeObject* cdr);
 FeObject* FeMakeBool(FeContext* ctx, bool b);
-FeObject* FeMakeNumber(FeContext* ctx, FeNumber n);
+FeObject* FeMakeDouble(FeContext* ctx, FeDouble n);
 FeObject* FeMakeString(FeContext* ctx, const char* str);
 FeObject* FeMakeSymbol(FeContext* ctx, const char* name);
 FeObject* FeMakeNativeFn(FeContext* ctx, FeNativeFn fn);
@@ -73,7 +73,7 @@ FeObject* FeRead(FeContext* ctx, FeReadFn fn, void* udata);
 FeObject* FeReadFile(FeContext* ctx, FILE* fp);
 
 size_t FeToString(FeContext* ctx, FeObject* obj, char* dst, size_t size);
-FeNumber FeToNumber(FeContext* ctx, FeObject* obj);
+FeDouble FeToDouble(FeContext* ctx, FeObject* obj);
 void* FeToPtr(FeContext* ctx, FeObject* obj);
 void FeSet(FeContext* ctx, FeObject* sym, FeObject* v);
 
