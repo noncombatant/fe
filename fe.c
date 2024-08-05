@@ -22,7 +22,7 @@ typedef enum Primitive {
   PSet,
   PIf,
   PFn,
-  PMac,
+  PMacro,
   PWhile,
   PQuote,
   PAnd,
@@ -48,7 +48,7 @@ typedef enum Primitive {
 } Primitive;
 
 static const char* primitive_names[] = {
-    "let",  "=",     "if",  "fn",  "mac",    "while",  "quote", "and", "or",
+    "let",  "=",     "if",  "fn",  "macro",  "while",  "quote", "and", "or",
     "do",   "cons",  "car", "cdr", "setcar", "setcdr", "list",  "not", "is",
     "atom", "print", "<",   "<=",  "+",      "-",      "*",     "/"};
 
@@ -784,7 +784,7 @@ static FeObject* Evaluate(FeContext* ctx,
           break;
 
         case PFn:
-        case PMac:
+        case PMacro:
           va = FeCons(ctx, env, arg);
           FeGetNextArgument(ctx, &arg);
           res = MakeObject(ctx);

@@ -1,7 +1,7 @@
 ;; For example, we could define the following macro to increment a value by one:
 
 (= incr
-  (mac (sym)
+  (macro (sym)
     (list '= sym (list '+ sym 1))))
 
 ;; And use it in the following while loop:
@@ -24,12 +24,12 @@
 ;; Subsequent iterations of the loop would run the new code which now exists where
 ;; the macro call was originally.
 
-(= push (mac (val lst)
+(= push (macro (val lst)
   (list '= lst (list 'cons val lst))
 ))
 
 
-(= for (mac (item lst . body)
+(= for (macro (item lst . body)
   (list 'do
     (list 'let 'for-iter lst)
     (list 'while 'for-iter
