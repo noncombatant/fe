@@ -19,4 +19,7 @@
 (print (round 1234.987))
 (print (round-to-int 1234.987))
 (print (square-root 9))
-(print (trunc 1234.987))
+(print (truncate 1234.987))
+
+(print pi)
+(print e)
