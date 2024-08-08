@@ -4,12 +4,11 @@ CFLAGS = -Weverything -Werror -std=c2x \
   -Wno-declaration-after-statement \
   -Wno-padded
 
-# Sometimes -O3 catches more warnings:
-CFLAGS += -O3 -fsanitize=undefined
-
-# Debug:
-# CFLAGS += -O0 -fsanitize=address -g
-# LDFLAGS = -static-libsan
+ifdef RELEASE
+	CFLAGS += -O3
+else
+	CFLAGS += -g -O3 -fsanitize=address -fsanitize=undefined -fsanitize-trap=all
+endif
 
 test: fe
 	./test.sh
