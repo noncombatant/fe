@@ -11,6 +11,7 @@
 
 #include "fe.h"
 #include "fex.h"
+#include "fex_io.h"
 #include "fex_math.h"
 
 static jmp_buf top_level;

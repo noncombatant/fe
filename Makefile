@@ -16,7 +16,7 @@ test: fe
 run: fe
 	./fe
 
-fe: main.c fe.o fex.o fex_math.o
+fe: main.c fe.o fex.o fex_io.o fex_math.o
 	$(CC) $(CFLAGS) -o $@ $^
 
 clean:
