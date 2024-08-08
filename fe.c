@@ -67,7 +67,7 @@ struct FeObject {
   Value car, cdr;
 };
 
-static FeObject nil = {{(void*)(FeTNil << 2 | 1)}, {NULL}};
+FeObject nil = {{(void*)(FeTNil << 2 | 1)}, {NULL}};
 
 #define CAR(x) ((x)->car.o)
 #define CDR(x) ((x)->cdr.o)

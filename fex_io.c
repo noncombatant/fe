@@ -19,9 +19,10 @@ FeObject* FexOpen(FeContext* ctx, FeObject* arg) {
   char mode[8];
   (void)FeToString(ctx, FeGetNextArgument(ctx, &arg), mode, sizeof(mode));
   FILE* file = fopen(pathname, mode);
-  // TODO: Expose nil in fe.h
-  //   if (file == NULL) {
-  //     return &nil;
-  //   }
+  if (file == NULL) {
+    return &nil;
+  }
   return FeMakePtr(ctx, file);
+  // TODO: Return a type-tagged object or a meaningful error object; define
+  // these in fex.h. This will require a `FeToFex` as well, instead of Ptr.
 }

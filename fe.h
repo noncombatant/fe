@@ -39,6 +39,8 @@ typedef enum FeType {
   FeTPtr
 } FeType;
 
+extern FeObject nil;
+
 FeContext* FeOpenContext(void* ptr, size_t size);
 void FeCloseContext(FeContext* ctx);
 FeHandlers* FeGetHandlers(FeContext* ctx);
