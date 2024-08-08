@@ -55,6 +55,7 @@ int main(int count, char* arguments[]) {
   // Initialize the context:
   char* arena = malloc(arena_size);
   FeContext* ctx = FeOpenContext(arena, arena_size);
+  FexInstallIO(ctx);
   FexInstallMath(ctx);
 
   FILE* input = stdin;
