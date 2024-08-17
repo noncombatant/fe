@@ -87,8 +87,8 @@ static FeDouble GetDouble(const FeObject* o) {
 }
 
 // TODO: Replace uses of this and `IsNil` with `FeGetType` and `FeIsNil`.
-static int GetType(const FeObject* o) {
-  return TAG(o) & 0x1 ? TAG(o) >> 2 : FeTPair;
+static FeType GetType(const FeObject* o) {
+  return (FeType)(TAG(o) & 0x1 ? TAG(o) >> 2 : FeTPair);
 }
 
 static FeNativeFn* GetNativeFn(const FeObject* o) {
@@ -175,11 +175,11 @@ FeObject* FeGetNextArgument(FeContext* ctx, FeObject** arg) {
   return CAR(a);
 }
 
-static const char* GetTypeName(int type) {
-  return (size_t)type < COUNT(type_names) ? type_names[type] : "unknown";
+static const char* GetTypeName(FeType type) {
+  return type < COUNT(type_names) ? type_names[type] : "unknown";
 }
 
-static FeObject* CheckType(FeContext* ctx, FeObject* obj, int type) {
+static FeObject* CheckType(FeContext* ctx, FeObject* obj, FeType type) {
   if (GetType(obj) != type) {
     char message[64];
     Format(message, sizeof(message), "expected %s, got %s", GetTypeName(type),
@@ -189,8 +189,8 @@ static FeObject* CheckType(FeContext* ctx, FeObject* obj, int type) {
   return obj;
 }
 
-int FeGetType(FeContext*, FeObject* obj) {
-  return GetType(obj);
+FeType FeGetType(FeContext*, FeObject* obj) {
+  return (FeType)GetType(obj);
 }
 
 bool FeIsNil(FeContext*, FeObject* obj) {
@@ -233,10 +233,29 @@ begin:
       goto begin;
 
     case FeTPtr:
+    case FeTFex0:
+    case FeTFex1:
+    case FeTFex2:
+    case FeTFex3:
+    case FeTFex4:
+    case FeTFex5:
+    case FeTFex6:
+    case FeTFex7:
       if (ctx->handlers.mark) {
         ctx->handlers.mark(ctx, obj);
       }
       break;
+
+    case FeTFree:
+    case FeTNil:
+    case FeTDouble:
+    case FeTPrimitive:
+    case FeTNativeFn:
+      // Do nothing.
+      break;
+
+    case FeTSentinel:
+      abort();
   }
 }
 
@@ -497,11 +516,27 @@ void FeWrite(FeContext* ctx, FeObject* obj, FeWriteFn fn, void* udata, int qt) {
       }
       break;
 
-    default:
+    case FeTFree:
+    case FeTFn:
+    case FeTMacro:
+    case FeTPrimitive:
+    case FeTNativeFn:
+    case FeTPtr:
+    case FeTFex0:
+    case FeTFex1:
+    case FeTFex2:
+    case FeTFex3:
+    case FeTFex4:
+    case FeTFex5:
+    case FeTFex6:
+    case FeTFex7:
       Format(buf, sizeof(buf), "[%s %p]", GetTypeName(GetType(obj)),
              (void*)obj);
       WriteString(ctx, fn, udata, buf);
       break;
+
+    case FeTSentinel:
+      abort();
   }
 }
 
@@ -539,9 +574,8 @@ FeDouble FeToDouble(FeContext* ctx, FeObject* obj) {
 }
 
 void* FeToPtr(FeContext*, FeObject* obj) {
-  const int type = GetType(obj);
+  const FeType type = GetType(obj);
   if (type >= FeTSentinel) {
-    // TODO: Handle error.
     abort();
   }
   return CDR(obj);
@@ -927,8 +961,25 @@ static FeObject* Evaluate(FeContext* ctx,
       ctx->call_list = CDR(&cl);
       return Evaluate(ctx, obj, env, NULL);
 
-    default:
+    case FeTPair:
+    case FeTFree:
+    case FeTNil:
+    case FeTDouble:
+    case FeTSymbol:
+    case FeTString:
+    case FeTPtr:
+    case FeTFex0:
+    case FeTFex1:
+    case FeTFex2:
+    case FeTFex3:
+    case FeTFex4:
+    case FeTFex5:
+    case FeTFex6:
+    case FeTFex7:
       FeHandleError(ctx, "tried to call non-callable value");
+
+    case FeTSentinel:
+      abort();
   }
 
   FeRestoreGC(ctx, gc);

@@ -69,7 +69,7 @@ FeHandlers* FeGetHandlers(FeContext* ctx);
 void FeHandleError(FeContext* ctx, const char* msg);
 FeObject* FeGetNextArgument(FeContext* ctx, FeObject** arg);
 
-int FeGetType(FeContext* ctx, FeObject* obj);  // TODO enum return
+FeType FeGetType(FeContext* ctx, FeObject* obj);
 bool FeIsNil(FeContext* ctx, FeObject* obj);
 
 void FePushGC(FeContext* ctx, FeObject* obj);

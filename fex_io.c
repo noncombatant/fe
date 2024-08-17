@@ -28,7 +28,7 @@ FeObject* FexOpenFile(FeContext* ctx, FeObject* arg) {
 
 FeObject* FexCloseFile(FeContext* ctx, FeObject* arg) {
   FeObject* file = FeGetNextArgument(ctx, &arg);
-  const int type = FeGetType(ctx, file);
+  const FeType type = FeGetType(ctx, file);
   if (type != FexTFile) {
     return FeMakePtr(ctx, FexTError, (void*)(uintptr_t)type);
   }
