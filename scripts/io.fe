@@ -1,0 +1,3 @@
+(= f (open-file "fe.c" "r"))
+(if (is f nil) (print "alas"))
+(close-file f)

@@ -1,28 +1,38 @@
 // Copyright 2024 Chris Palmer, https://noncombatant.org/
 // SPDX-License-Identifier: MIT
 
+#include <errno.h>
 #include <limits.h>
 #include <math.h>
+#include <stdint.h>
 #include <stdio.h>
 
 #include "fex.h"
 #include "fex_io.h"
 
 void FexInstallIO(FeContext* ctx) {
-  FexInstallNativeFn(ctx, "open", FexOpen);
+  FexInstallNativeFn(ctx, "close-file", FexCloseFile);
+  FexInstallNativeFn(ctx, "open-file", FexOpenFile);
 }
 
-FeObject* FexOpen(FeContext* ctx, FeObject* arg) {
+FeObject* FexOpenFile(FeContext* ctx, FeObject* arg) {
   char pathname[PATH_MAX + 1];
   (void)FeToString(ctx, FeGetNextArgument(ctx, &arg), pathname,
                    sizeof(pathname));
   char mode[8];
   (void)FeToString(ctx, FeGetNextArgument(ctx, &arg), mode, sizeof(mode));
   FILE* file = fopen(pathname, mode);
-  if (file == NULL) {
-    return &nil;
+  return file != NULL ? FeMakePtr(ctx, FexTFile, file)
+                      : FeMakePtr(ctx, FexTError, (void*)(uintptr_t)errno);
+}
+
+FeObject* FexCloseFile(FeContext* ctx, FeObject* arg) {
+  FeObject* file = FeGetNextArgument(ctx, &arg);
+  const int type = FeGetType(ctx, file);
+  if (type != FexTFile) {
+    return FeMakePtr(ctx, FexTError, (void*)(uintptr_t)type);
   }
-  return FeMakePtr(ctx, file);
-  // TODO: Return a type-tagged object or a meaningful error object; define
-  // these in fex.h. This will require a `FeToFex` as well, instead of Ptr.
+  return fclose(FeToPtr(ctx, file)) == 0
+             ? &nil
+             : FeMakePtr(ctx, FexTError, (void*)(uintptr_t)errno);
 }
