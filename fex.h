@@ -6,6 +6,11 @@
 
 #include "fe.h"
 
+enum {
+  FexTError = FeTFex0,
+  FexTFile = FeTFex1,
+};
+
 void FexInstallNativeFn(FeContext* ctx, const char* name, FeNativeFn fn);
 
 #endif
