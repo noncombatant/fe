@@ -36,7 +36,28 @@ typedef enum FeType {
   FeTMacro,
   FeTPrimitive,
   FeTNativeFn,
-  FeTPtr
+  FeTPtr,
+
+  // This is a disgusting/hilarious way to extend `FeType` in the Fex API: When
+  // defining custom types in Fex, use these `FeTFex*` values. Example:
+  //
+  //   enum {
+  //     FexTMyType = FeTFex0,
+  //     FexTMyOtherType = FeTFex1,
+  //   };
+  //
+  // This allows us to use `FeType` instead of `int` in the API.
+  FeTFex0,
+  FeTFex1,
+  FeTFex2,
+  FeTFex3,
+  FeTFex4,
+  FeTFex5,
+  FeTFex6,
+  FeTFex7,
+  // Add more as needed.
+
+  FeTSentinel,
 } FeType;
 
 extern FeObject nil;
@@ -62,7 +83,7 @@ FeObject* FeMakeDouble(FeContext* ctx, FeDouble n);
 FeObject* FeMakeString(FeContext* ctx, const char* str);
 FeObject* FeMakeSymbol(FeContext* ctx, const char* name);
 FeObject* FeMakeNativeFn(FeContext* ctx, FeNativeFn fn);
-FeObject* FeMakePtr(FeContext* ctx, void* ptr);
+FeObject* FeMakePtr(FeContext* ctx, FeType type, void* ptr);
 FeObject* FeMakeList(FeContext* ctx, FeObject** objs, size_t n);
 
 FeObject* FeCar(FeContext* ctx, FeObject* obj);

@@ -17,6 +17,8 @@
 // TODO: This should scale with arena size.
 #define GC_STACK_SIZE (512)
 
+#define COUNT(a) (sizeof((a)) / sizeof((a)[0]))
+
 typedef enum Primitive {
   PLet,
   PSet,
@@ -52,14 +54,17 @@ static const char* primitive_names[] = {
     "do",   "cons",  "car", "cdr", "setcar", "setcdr", "list",  "not", "is",
     "atom", "print", "<",   "<=",  "+",      "-",      "*",     "/"};
 
-static const char* type_names[] = {"pair",   "free",      "nil", "double",
-                                   "symbol", "string",    "fn",  "macro",
-                                   "prim",   "native-fn", "ptr"};
+// TODO: Make this public so that Fex callers can supply their own names.
+static const char* type_names[] = {
+    "pair",  "free", "nil",       "double", "symbol", "string", "fn",
+    "macro", "prim", "native-fn", "ptr",    "fex0",   "fex1",   "fex2",
+    "fex3",  "fex4", "fex5",      "fex6",   "fex7"};
 
 typedef union {
   FeObject* o;
   FeNativeFn* f;
   FeDouble n;
+  // TODO: Might need/want to make this `uintptr_t` someday.
   char c;
 } Value;
 
@@ -81,6 +86,7 @@ static FeDouble GetDouble(const FeObject* o) {
   return o->cdr.n;
 }
 
+// TODO: Replace uses of this and `IsNil` with `FeGetType` and `FeIsNil`.
 static int GetType(const FeObject* o) {
   return TAG(o) & 0x1 ? TAG(o) >> 2 : FeTPair;
 }
@@ -98,7 +104,7 @@ static bool IsNil(const FeObject* o) {
 }
 
 // TODO: When we use a real enum for type, update this.
-static void SetType(FeObject* o, int type) {
+static void SetType(FeObject* o, FeType type) {
   o->car.c = (char)((type) << 2 | 1);
 }
 
@@ -169,11 +175,15 @@ FeObject* FeGetNextArgument(FeContext* ctx, FeObject** arg) {
   return CAR(a);
 }
 
+static const char* GetTypeName(int type) {
+  return (size_t)type < COUNT(type_names) ? type_names[type] : "unknown";
+}
+
 static FeObject* CheckType(FeContext* ctx, FeObject* obj, int type) {
   if (GetType(obj) != type) {
     char message[64];
-    Format(message, sizeof(message), "expected %s, got %s", type_names[type],
-           type_names[GetType(obj)]);
+    Format(message, sizeof(message), "expected %s, got %s", GetTypeName(type),
+           GetTypeName(GetType(obj)));
     FeHandleError(ctx, message);
   }
   return obj;
@@ -397,9 +407,9 @@ FeObject* FeMakeNativeFn(FeContext* ctx, FeNativeFn fn) {
   return obj;
 }
 
-FeObject* FeMakePtr(FeContext* ctx, void* ptr) {
+FeObject* FeMakePtr(FeContext* ctx, FeType type, void* ptr) {
   FeObject* obj = MakeObject(ctx);
-  SetType(obj, FeTPtr);
+  SetType(obj, type);
   CDR(obj) = ptr;
   return obj;
 }
@@ -488,7 +498,8 @@ void FeWrite(FeContext* ctx, FeObject* obj, FeWriteFn fn, void* udata, int qt) {
       break;
 
     default:
-      Format(buf, sizeof(buf), "[%s %p]", type_names[GetType(obj)], (void*)obj);
+      Format(buf, sizeof(buf), "[%s %p]", GetTypeName(GetType(obj)),
+             (void*)obj);
       WriteString(ctx, fn, udata, buf);
       break;
   }
@@ -527,8 +538,13 @@ FeDouble FeToDouble(FeContext* ctx, FeObject* obj) {
   return GetDouble(CheckType(ctx, obj, FeTDouble));
 }
 
-void* FeToPtr(FeContext* ctx, FeObject* obj) {
-  return CDR(CheckType(ctx, obj, FeTPtr));
+void* FeToPtr(FeContext*, FeObject* obj) {
+  const int type = GetType(obj);
+  if (type >= FeTSentinel) {
+    // TODO: Handle error.
+    abort();
+  }
+  return CDR(obj);
 }
 
 static FeObject* GetBound(FeObject* sym, FeObject* env) {
