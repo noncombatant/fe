@@ -12,6 +12,14 @@ for s in scripts/*; do
     fi
 done
 
+./fe -e '(print "hello, world!")' > out 2> err
+if cmp out "tests/one-liner.out" && cmp err "tests/one-liner.err"; then
+    echo "✅ one-liner"
+else
+    echo "❌ one-liner"
+    failed=$(($failed + 1))
+fi
+
 rm out err
 
 if [[ $failed -eq 0 ]]; then

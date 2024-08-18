@@ -45,31 +45,6 @@ static void noreturn PrintHelp(int status) {
   exit(status);
 }
 
-typedef struct StringFile {
-  char* string;
-  size_t length;
-  size_t position;
-} StringFile;
-
-#define MIN(a, b) (a) < (b) ? (a) : (b)
-
-static int Read(void* cookie, char* buffer, int size) {
-  if (size <= 0) {
-    return size;
-  }
-
-  StringFile* s = cookie;
-  if (s->position >= s->length) {
-    return 0;
-  }
-
-  const size_t remaining = s->length - s->position;
-  const size_t n = MIN((size_t)size, remaining);
-  memcpy(buffer, s->string + s->position, n);
-  s->position += n;
-  return (int)n;
-}
-
 static void ReadEvaluatePrint(FeContext* context, FILE* input) {
   size_t gc = FeSaveGC(context);
   while (true) {
@@ -131,16 +106,9 @@ int main(int count, char* arguments[]) {
 
   // Get the input program:
   FILE* input = stdin;
-  StringFile program;
   if (count > 0) {
-    const char* a = arguments[0];
-    if (program_literal) {
-      program = (StringFile){.string = a, .length = strlen(a), .position = 0};
-      // TODO: Use `fopencookie` on Linux.
-      input = fropen(&program, Read);
-    } else {
-      input = fopen(a, "rb");
-    }
+    char* a = arguments[0];
+    input = program_literal ? fmemopen(a, strlen(a), "rb") : fopen(a, "rb");
     if (!input) {
       FeHandleError(context, "could not open input file");
     }
@@ -152,5 +120,8 @@ int main(int count, char* arguments[]) {
   }
   ReadEvaluatePrint(context, input);
 
+  if (fclose(input)) {
+    perror("could not close input");
+  }
   free(arena);
 }
