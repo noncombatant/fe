@@ -16,8 +16,16 @@
 
 static jmp_buf top_level;
 
-static void noreturn HandleError(FeContext*, const char* message, FeObject*) {
+static void noreturn HandleError(FeContext* ctx,
+                                 const char* message,
+                                 FeObject* stack) {
   fprintf(stderr, "error: %s\n", message);
+  while (!FeIsNil(stack)) {
+    char fn[1024];
+    FeToString(ctx, FeCar(ctx, stack), fn, sizeof(fn));
+    fprintf(stderr, "%s\n", fn);
+    stack = FeCdr(ctx, stack);
+  }
   longjmp(top_level, -1);
 }
 
@@ -29,14 +37,18 @@ static void noreturn PrintHelp(int status) {
 int main(int count, char* arguments[]) {
   // Parse command line options:
   size_t arena_size = 64 * 1024;
+  bool ignore_exceptions = false;
   while (true) {
-    int ch = getopt(count, arguments, "hs:");
+    int ch = getopt(count, arguments, "his:");
     if (ch == -1) {
       break;
     }
     switch (ch) {
       case 'h':
         PrintHelp(EXIT_SUCCESS);
+      case 'i':
+        ignore_exceptions = true;
+        break;
       case 's': {
         char* end = NULL;
         arena_size = strtoul(optarg, &end, 0);
@@ -66,7 +78,7 @@ int main(int count, char* arguments[]) {
     }
   }
 
-  if (input == stdin) {
+  if (input == stdin || ignore_exceptions) {
     FeGetHandlers(ctx)->error = HandleError;
   }
   size_t gc = FeSaveGC(ctx);
