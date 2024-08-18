@@ -2,7 +2,7 @@
 
 ## Forms
 
-### Special forms
+### Special Forms
 
 #### `(let symbol value)`
 

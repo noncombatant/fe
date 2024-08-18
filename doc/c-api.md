@@ -1,122 +1,140 @@
 # C API
 
-## Initializing a context
+For the full details of the core Fe API, refer to `fe.h`. Here is an overview.
 
-To use `fe` in your project, you must first initialize a `fe_Context` by using
-the `fe_open` function. The function expects a block of memory (typically
-greater than 16 KiB). `fe` uses the block to store objects and context state,
-and it must remain valid for the lifetime of the context. `fe_close` should be
-called when you are finished with a context. This assures that any `ptr` objects
-are properly garbage-collected.
+## Initializing A Context
+
+To use Fe in your project, you must first initialize a `FeContext` by using the
+`FeOpenContext` function. The function expects a block of memory (typically
+greater than 16 KiB). Fe uses the block to store objects and context state, and
+it must remain valid for the lifetime of the context. `FeCloseContext` should be
+called when you are finished with a context. This assures that any `FePtr`
+objects are properly garbage-collected.
 
 ```c
 size_t size = 1024 * 1024;
 void* data = malloc(size);
-
-fe_Context* ctx = fe_open(data, size);
+FeContext* ctx = FeOpenContext(data, size);
 
 // ...
 
-fe_close(ctx);
+FeCloseContext(ctx);
 free(data);
 ```
 
-## Running a script
+## Running A Script
 
-To run a script `fe` must first read and then evaluate it. Do this in a loop if
-there are several root-level expressions contained in the script. `fe` provides
-`fe_readfp` as a convenience to read from a file pointer, and you can also use
-`fe_read` with a custom `fe_ReadFn` callback function to read from other
-sources.
+To run a script, Fe must first read and then evaluate it. Do this in a loop if
+there are several root-level expressions contained in the script. Fe provides
+`FeReadFile` as a convenience to read from a file pointer, and you can also use
+`FeRead` with a custom `FeReadFn` callback function to read from other sources.
 
 ```c
-FILE* fp = fopen("test.fe", "rb");
-size_t gc = fe_savegc(ctx);
+FILE* file = fopen("test.fe", "rb");
+size_t gc = FeSaveGC(ctx);
 while (true) {
-  fe_Object* obj = fe_readfp(ctx, fp);
-
-  /* break if there's nothing left to read */
+  FeObject* obj = FeReadFile(ctx, file);
+  // Break if there's nothing left to read.
   if (!obj) {
     break;
   }
+  // Evaluate read object.
+  FeEvalute(ctx, obj);
 
-  /* evaluate read object */
-  fe_eval(ctx, obj);
-
-  /* restore GC stack which would now contain both the read object and
-  ** result from evaluation */
-  fe_restoregc(ctx, gc);
+  // Restore GC stack which would now contain both the read object and
+  // the result from evaluation.
+  FeRestoreGC(ctx, gc);
 }
-fclose(fp);
+fclose(file);
 ```
 
-## Calling a function
+## Calling A Function
 
 You can call a function by creating a list and evaulating it; for example, we
 could add two numbers using the `+` function:
 
 ```c
-size_t gc = fe_savegc(ctx);
+size_t gc = FeSaveGC(ctx);
 
-fe_Object* objs[3];
-objs[0] = fe_symbol(ctx, "+");
-objs[1] = fe_number(ctx, 10);
-objs[2] = fe_number(ctx, 20);
+FeObject* objs[] = {
+  FeMakeSymbol(ctx, "+"),
+  FeMakeDouble(ctx, 10),
+  FeMakeDouble(ctx, 20),
+};
+FeObject* result = FeEvaluate(ctx, FeMakeList(ctx, objs, 3));
+printf("result: %g\n", FeToNumber(ctx, result));
 
-fe_Object* result = fe_eval(ctx, fe_list(ctx, objs, 3));
-printf("result: %g\n", fe_tonumber(ctx, result));
-
-/* discard all temporary objects pushed to the GC stack */
-fe_restoregc(ctx, gc);
+// Discard all temporary objects pushed to the GC stack.
+FeRestoreGC(ctx, gc);
 ```
 
-## Exposing a C function
+## Extending The Core: Fex
 
-You can create a `cfunc` by using the `fe_cfunc` function with a `fe_CFunc`
-function argument. The `cfunc` can be bound to a global variable by using the
-`fe_set` function. `cfunc`s take a context and argument list as its arguments
-and returns a result object. The result must never be `NULL`; if you want to
-return `nil`, use the value returned by `fe_bool(ctx, false)`.
+For the full details of the Fex extension API, refer to `fex.h`. Here is an
+overview.
+
+### Exposing A C Function
+
+You can install a `FeNativeFn` into a `FeContext` by using `FeMakeNativeFn`. The
+`FeNativeFn` can be bound to a global variable by using the `FeSet` function.
+`FeNativeFn`s take a context and an argument list as arguments, and return an
+`FeObject`. The result must never be `NULL`; if you want to return `nil`, use
+the value returned by `FeMakeBool(ctx, false)`.
 
 You could expose the `pow` function from `math.h` like so:
 
 ```c
-static fe_Object* f_pow(fe_Context* ctx, fe_Object* arg) {
-  float x = fe_tonumber(ctx, fe_nextarg(ctx, &arg));
-  float y = fe_tonumber(ctx, fe_nextarg(ctx, &arg));
-  return fe_number(ctx, pow(x, y));
+static FeObject* Power(FeContext* ctx, FeObject* arg) {
+  double x = FeToDouble(ctx, FeGetNextArgument(ctx, &arg));
+  double y = FeToDouble(ctx, FeGetNextArgument(ctx, &arg));
+  return FeMakeDouble(ctx, pow(x, y));
 }
 
-fe_set(ctx, fe_symbol(ctx, "pow"), fe_cfunc(ctx, f_pow));
+FeSet(ctx, FeMakeSymbol(ctx, "pow"), FeMakeNativeFn(ctx, Power));
 ```
 
-You can then call the `cfunc` like any other function:
+You can then call the `FeNativeFn` from Fe like any other function:
 
 ```clojure
 (print (pow 2 10))
 ```
 
-## Creating a `ptr`
+### Creating An `FePtr`
 
-`fe` provides the `ptr` object type to allow for custom objects. `fe` performs
-no type checking on custom types, and thus you must wrap and tag pointers to
-assure type safety if you use more than one type.
+Fe provides the `FePtr` object type to allow for custom objects. For type
+safety, you must tag your types by using the `FeTFex*` elements of the `FeType`
+`enum` type. You can give them your own `enum` names:
 
-You can create a `ptr` object by using the `fe_ptr` function.
+```c
+enum {
+  MyTypeFoo = FeTFex0,
+  MyTypeBar = FeTFex1,
+  // ...
+};
+```
 
-`fe` provides the `gc` and `mark` handlers for dealing with `ptr`s regarding
-garbage collection. Whenever the GC marks a `ptr`, it calls the `mark` handler
-on it — this is useful if the `ptr` stores additional objects which also need to
-be marked via `fe_mark`. `fe` calls the `gc` handler on the `ptr` when it
-becomes unreachable and garbage-collects it, such that the resources used by the
-`ptr` can be freed. You can set the handlers by setting the relevant fields in
-the struct returned by `fe_handlers`.
+And you should give them string names, too, using the global `type_names` array:
 
-## Error handling
+```c
+type_names[MyTypeFoo] = "foo";
+type_names[MyTypeBar] = "bar";
+```
 
-When an error occurs, `fe` calls `fe_error`. By default, `fe` prints the error
+You can create an `FePtr` object by using the `FeMakePtr` function.
+
+Fe provides the `gc` and `mark` `FeHandler`s to customize garbage collection for
+your `FePtr` types. Whenever the GC marks an `FePtr`, it calls the `mark`
+handler on it — this is useful if the `FePtr` stores additional objects which
+also need to be marked via `FeMark`. Fe calls the `gc` handler on the `FePtr`
+when it becomes unreachable and collects it, such that the resources used by the
+`FePtr` can be freed. You can set the handlers by setting the relevant fields in
+the `FeHandlers` returned by `FeGetHandlers`.
+
+### Error Handling
+
+When an error occurs, Fe calls `FeHandleError`. By default, Fe prints the error
 and stack trace and the program exits. If you want to recover from an error, set
-the `error` handler field in the struct returned by `fe_handlers` and use
-`longjmp` to exit the handler. `fe` leaves the context in a safe state and you
-can continue to use it. Do not create New `fe_Object`s  inside the error
+the `error` handler field in the `FeHandlers` returned by `FeGetHandlers` and
+use `longjmp` to exit the handler. Fe leaves the context in a safe state and you
+can continue to use it. However, do not create new `FeObject`s inside the error
 handler.
