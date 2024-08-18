@@ -96,6 +96,7 @@ int main(int count, char* arguments[]) {
   }
   count -= optind;
   arguments += optind;
+  interactive = interactive || count == 0;
 
   // Initialize the context:
   char* arena = malloc(arena_size);
@@ -121,9 +122,7 @@ int main(int count, char* arguments[]) {
       perror("could not close input");
     }
   }
-  if (count == 0 || interactive) {
-    setjmp(top_level);
-    FeGetHandlers(context)->error = HandleError;
+  if (interactive) {
     ReadEvaluatePrint(context, stdin, gc);
   }
 
