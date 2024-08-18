@@ -96,11 +96,8 @@ int main(int count, char* arguments[]) {
         break;
       }
       case 'v':
-        printf(
-            "Fe version: %s\n"
-            "Fex version: %s\n"
-            "Interpreter version: %s\n",
-            FeVersion, FexVersion, InterpreterVersion);
+        printf("Fe version: %s\nFex version: %s\nInterpreter version: %s\n",
+               FeVersion, FexVersion, InterpreterVersion);
         return 0;
       default:
         PrintHelp(EXIT_FAILURE);
