@@ -1,0 +1,8 @@
+(= assert-is (fn (expectation value)
+    (assert (is expectation value))))
+
+(= assert-nil (fn (value)
+    (assert-is nil value)))
+
+(= assert-not-nil (fn value)
+    (not (assert-is nil value)))

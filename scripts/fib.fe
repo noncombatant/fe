@@ -5,4 +5,4 @@
   )
 ))
 
-(print (fib 28))
+(assert-is 317811 (fib 28))

@@ -1,6 +1,3 @@
-(= assert-is (fn (expectation value)
-    (assert (is expectation value))))
-
 (assert-is 200 (abs -200))
 (assert-is 200 (abs 200))
 (assert-is 433 (ceiling 432.1))

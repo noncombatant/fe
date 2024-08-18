@@ -17,7 +17,7 @@ check_results() {
 run_test() {
     for s in scripts/*; do
         local b=$(basename "$s")
-        ./fe "$s" > out 2> err
+        ./fe scripts/assert.fe "$s" > out 2> err
         check_results "tests/$b.out" "tests/$b.err" "$s"
     done
     ./fe -e '(print "hello, world!")' > out 2> err
