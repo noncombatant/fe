@@ -793,6 +793,129 @@ static FeObject* ArgsToEnv(FeContext* ctx,
     res = FeMakeBool(ctx, GetDouble(va) op GetDouble(vb)); \
   }
 
+static FeObject* EvaluatePrimitive(FeContext* ctx,
+                                   FeObject* obj,
+                                   FeObject* env,
+                                   FeObject** newenv,
+                                   FeObject* fn) {
+  FeObject* res = &nil;
+  FeObject* arg = CDR(obj);
+  FeObject* va;
+  FeObject* vb;
+  switch (GetP(fn)) {
+    case PAssert:
+      va = EVAL_ARG();
+      if (FeIsNil(va)) {
+        FeHandleError(ctx, "assertion failure");
+      }
+      return res;
+    case PLet:
+      va = CheckType(ctx, FeGetNextArgument(ctx, &arg), FeTSymbol);
+      if (newenv) {
+        *newenv = FeCons(ctx, FeCons(ctx, va, EVAL_ARG()), env);
+      }
+      return res;
+    case PSet:
+      va = CheckType(ctx, FeGetNextArgument(ctx, &arg), FeTSymbol);
+      CDR(GetBound(va, env)) = EVAL_ARG();
+      return res;
+    case PIf:
+      while (!FeIsNil(arg)) {
+        va = EVAL_ARG();
+        if (!FeIsNil(va)) {
+          res = FeIsNil(arg) ? va : EVAL_ARG();
+          return res;
+        }
+        if (FeIsNil(arg)) {
+          return res;
+        }
+        arg = CDR(arg);
+      }
+      return res;
+    case PFn:
+    case PMacro:
+      va = FeCons(ctx, env, arg);
+      FeGetNextArgument(ctx, &arg);
+      res = MakeObject(ctx);
+      SetType(res, GetP(fn) == PFn ? FeTFn : FeTMacro);
+      CDR(res) = va;
+      return res;
+    case PWhile: {
+      va = FeGetNextArgument(ctx, &arg);
+      size_t n = FeSaveGC(ctx);
+      while (!FeIsNil(Evaluate(ctx, va, env, NULL))) {
+        DoList(ctx, arg, env);
+        FeRestoreGC(ctx, n);
+      }
+      return res;
+    }
+    case PQuote:
+      return FeGetNextArgument(ctx, &arg);
+    case PAnd:
+      while (!FeIsNil(arg) && !FeIsNil(res = EVAL_ARG()))
+        ;
+      return res;
+    case POr:
+      while (!FeIsNil(arg) && FeIsNil(res = EVAL_ARG()))
+        ;
+      return res;
+    case PDo:
+      return DoList(ctx, arg, env);
+    case PCons:
+      va = EVAL_ARG();
+      return FeCons(ctx, va, EVAL_ARG());
+    case PCar:
+      return FeCar(ctx, EVAL_ARG());
+    case PCdr:
+      return FeCdr(ctx, EVAL_ARG());
+    case PSetCar:
+      va = CheckType(ctx, EVAL_ARG(), FeTPair);
+      CAR(va) = EVAL_ARG();
+      return res;
+    case PSetCdr:
+      va = CheckType(ctx, EVAL_ARG(), FeTPair);
+      CDR(va) = EVAL_ARG();
+      return res;
+    case PList:
+      return EvaluateList(ctx, arg, env);
+    case PNot:
+      return FeMakeBool(ctx, FeIsNil(EVAL_ARG()));
+    case PIs:
+      va = EVAL_ARG();
+      return FeMakeBool(ctx, Equal(va, EVAL_ARG()));
+    case PAtom:
+      return FeMakeBool(ctx, FeGetType(EVAL_ARG()) != FeTPair);
+    case PPrint:
+      while (!FeIsNil(arg)) {
+        FeWriteFile(ctx, EVAL_ARG(), stdout);
+        if (!FeIsNil(arg)) {
+          printf(" ");
+        }
+      }
+      printf("\n");
+      return res;
+    case PLess:
+      NUM_CMP_OP(<);
+      return res;
+    case PLessEqual:
+      NUM_CMP_OP(<=);
+      return res;
+    case PAdd:
+      ARITH_OP(+);
+      return res;
+    case PSub:
+      ARITH_OP(-);
+      return res;
+    case PMul:
+      ARITH_OP(*);
+      return res;
+    case PDiv:
+      ARITH_OP(/);
+      return res;
+  }
+  abort();
+}
+
 static FeObject* Evaluate(FeContext* ctx,
                           FeObject* obj,
                           FeObject* env,
@@ -818,145 +941,7 @@ static FeObject* Evaluate(FeContext* ctx,
 
   switch (FeGetType(fn)) {
     case FeTPrimitive:
-      switch (GetP(fn)) {
-        case PAssert:
-          va = EVAL_ARG();
-          if (FeIsNil(va)) {
-            FeHandleError(ctx, "assertion failure");
-          }
-          break;
-        case PLet:
-          va = CheckType(ctx, FeGetNextArgument(ctx, &arg), FeTSymbol);
-          if (newenv) {
-            *newenv = FeCons(ctx, FeCons(ctx, va, EVAL_ARG()), env);
-          }
-          break;
-
-        case PSet:
-          va = CheckType(ctx, FeGetNextArgument(ctx, &arg), FeTSymbol);
-          CDR(GetBound(va, env)) = EVAL_ARG();
-          break;
-
-        case PIf:
-          while (!FeIsNil(arg)) {
-            va = EVAL_ARG();
-            if (!FeIsNil(va)) {
-              res = FeIsNil(arg) ? va : EVAL_ARG();
-              break;
-            }
-            if (FeIsNil(arg)) {
-              break;
-            }
-            arg = CDR(arg);
-          }
-          break;
-
-        case PFn:
-        case PMacro:
-          va = FeCons(ctx, env, arg);
-          FeGetNextArgument(ctx, &arg);
-          res = MakeObject(ctx);
-          SetType(res, GetP(fn) == PFn ? FeTFn : FeTMacro);
-          CDR(res) = va;
-          break;
-
-        case PWhile: {
-          va = FeGetNextArgument(ctx, &arg);
-          size_t n = FeSaveGC(ctx);
-          while (!FeIsNil(Evaluate(ctx, va, env, NULL))) {
-            DoList(ctx, arg, env);
-            FeRestoreGC(ctx, n);
-          }
-          break;
-        }
-
-        case PQuote:
-          res = FeGetNextArgument(ctx, &arg);
-          break;
-
-        case PAnd:
-          while (!FeIsNil(arg) && !FeIsNil(res = EVAL_ARG()))
-            ;
-          break;
-
-        case POr:
-          while (!FeIsNil(arg) && FeIsNil(res = EVAL_ARG()))
-            ;
-          break;
-
-        case PDo:
-          res = DoList(ctx, arg, env);
-          break;
-
-        case PCons:
-          va = EVAL_ARG();
-          res = FeCons(ctx, va, EVAL_ARG());
-          break;
-
-        case PCar:
-          res = FeCar(ctx, EVAL_ARG());
-          break;
-
-        case PCdr:
-          res = FeCdr(ctx, EVAL_ARG());
-          break;
-
-        case PSetCar:
-          va = CheckType(ctx, EVAL_ARG(), FeTPair);
-          CAR(va) = EVAL_ARG();
-          break;
-
-        case PSetCdr:
-          va = CheckType(ctx, EVAL_ARG(), FeTPair);
-          CDR(va) = EVAL_ARG();
-          break;
-
-        case PList:
-          res = EvaluateList(ctx, arg, env);
-          break;
-
-        case PNot:
-          res = FeMakeBool(ctx, FeIsNil(EVAL_ARG()));
-          break;
-
-        case PIs:
-          va = EVAL_ARG();
-          res = FeMakeBool(ctx, Equal(va, EVAL_ARG()));
-          break;
-
-        case PAtom:
-          res = FeMakeBool(ctx, FeGetType(EVAL_ARG()) != FeTPair);
-          break;
-
-        case PPrint:
-          while (!FeIsNil(arg)) {
-            FeWriteFile(ctx, EVAL_ARG(), stdout);
-            if (!FeIsNil(arg)) {
-              printf(" ");
-            }
-          }
-          printf("\n");
-          break;
-
-        case PLess:
-          NUM_CMP_OP(<);
-          break;
-        case PLessEqual:
-          NUM_CMP_OP(<=);
-          break;
-        case PAdd:
-          ARITH_OP(+);
-          break;
-        case PSub:
-          ARITH_OP(-);
-          break;
-        case PMul:
-          ARITH_OP(*);
-          break;
-        case PDiv:
-          ARITH_OP(/);
-          break;
-      }
+      res = EvaluatePrimitive(ctx, obj, env, newenv, fn);
       break;
 
     case FeTNativeFn:
