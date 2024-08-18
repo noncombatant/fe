@@ -16,7 +16,7 @@ else
 	CFLAGS += -g -O3 -fsanitize=address -fsanitize=undefined -fsanitize-trap=all
 endif
 
-test: fe
+test:
 	./test.sh
 
 run: fe
