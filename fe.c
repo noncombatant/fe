@@ -114,7 +114,6 @@ static char GetP(const FeObject* o) {
   return o->cdr.c;
 }
 
-// TODO: When we use a real enum for type, update this.
 static void SetType(FeObject* o, FeType type) {
   o->car.c = (char)((type) << 2 | 1);
 }
