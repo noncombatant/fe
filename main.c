@@ -53,7 +53,7 @@ static size_t ReadEvaluatePrint(FeContext* context, FILE* input, size_t gc) {
     }
     FeObject* object = FeReadFile(context, input);
     if (object == NULL) {
-      break;
+      return FeSaveGC(context);
     }
     object = FeEvaluate(context, object);
     if (input == stdin) {
@@ -61,7 +61,6 @@ static size_t ReadEvaluatePrint(FeContext* context, FILE* input, size_t gc) {
       printf("\n");
     }
   }
-  return FeSaveGC(context);
 }
 
 int main(int count, char* arguments[]) {
@@ -103,12 +102,12 @@ int main(int count, char* arguments[]) {
   FeContext* context = FeOpenContext(arena, arena_size);
   FexInstallIO(context);
   FexInstallMath(context);
-
   if (interactive) {
     setjmp(top_level);
     FeGetHandlers(context)->error = HandleError;
   }
 
+  // REPL the inputs:
   size_t gc = FeSaveGC(context);
   for (int i = 0; i < count; i++) {
     char* a = arguments[i];
@@ -122,7 +121,6 @@ int main(int count, char* arguments[]) {
       perror("could not close input");
     }
   }
-
   if (count == 0 || interactive) {
     setjmp(top_level);
     FeGetHandlers(context)->error = HandleError;
