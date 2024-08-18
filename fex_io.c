@@ -6,6 +6,7 @@
 #include <math.h>
 #include <stdint.h>
 #include <stdio.h>
+#include <string.h>
 
 #include "fex.h"
 #include "fex_io.h"
@@ -22,17 +23,20 @@ FeObject* FexOpenFile(FeContext* ctx, FeObject* arg) {
   char mode[8];
   (void)FeToString(ctx, FeGetNextArgument(ctx, &arg), mode, sizeof(mode));
   FILE* file = fopen(pathname, mode);
-  return file != NULL ? FeMakePtr(ctx, FexTFile, file)
-                      : FeMakePtr(ctx, FexTError, (void*)(uintptr_t)errno);
+  if (file == NULL) {
+    FeHandleError(ctx, strerror(errno));
+  }
+  return FeMakePtr(ctx, FexTFile, file);
 }
 
 FeObject* FexCloseFile(FeContext* ctx, FeObject* arg) {
   FeObject* file = FeGetNextArgument(ctx, &arg);
   const FeType type = FeGetType(file);
   if (type != FexTFile) {
-    return FeMakePtr(ctx, FexTError, (void*)(uintptr_t)type);
+    FeHandleError(ctx, "not a file");
   }
-  return fclose(FeToPtr(ctx, file)) == 0
-             ? &nil
-             : FeMakePtr(ctx, FexTError, (void*)(uintptr_t)errno);
+  if (fclose(FeToPtr(ctx, file)) != 0) {
+    FeHandleError(ctx, strerror(errno));
+  }
+  return &nil;
 }

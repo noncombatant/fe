@@ -1,3 +1,8 @@
 (= f (open-file "fe.c" "r"))
 (if (is f nil) (print "alas"))
 (close-file f)
+
+(= g (fn (name) (open-file name "r")))
+(g "goat")
+
+(close-file 2)
