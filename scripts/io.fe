@@ -1,6 +1,6 @@
 (= f (open-file "fe.c" "r"))
-(if (is f nil) (print "alas"))
-(close-file f)
+(assert (not (is f nil)))
+(assert (is (close-file f) nil))
 
 (= g (fn (name) (open-file name "r")))
 (g "goat")
