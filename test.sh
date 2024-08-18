@@ -3,7 +3,7 @@
 failed=0
 for s in scripts/*; do
     b=$(basename "$s")
-    ./fe -i "$s" > out 2> err
+    ./fe "$s" > out 2> err
     if cmp out "tests/$b.out" && cmp err "tests/$b.err"; then
         echo "✅ $s"
     else

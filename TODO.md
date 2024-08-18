@@ -6,9 +6,6 @@ More example programs and tests
 
 Use // comments
 
-`-i` option like Python, so you can load module(s) and then get the REPL. Also,
-load and run more than one file, if more are given.
-
 Do we really want/need both `=` and `let`?
 
 Replace `car` and `cdr` with `head` and `tail`.

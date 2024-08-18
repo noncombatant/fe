@@ -1,5 +1,0 @@
-error: No such file or directory
-(open-file name "r")
-(g "goat")
-error: not a file
-(close-file 2)

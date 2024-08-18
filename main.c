@@ -36,17 +36,16 @@ static void noreturn PrintHelp(int status) {
           "fe — Fe language interpreter\n\n"
           "Usage:\n\n"
           "  fe -h\n"
-          "  fe [-i] [-s size] [program-file]\n\n"
+          "  fe [-i] [-s size] [program-file ...]\n\n"
           "Options:\n\n"
           "  -h    Print this help message and exit\n"
-          "  -i    Continue from exceptions\n"
+          "  -i    Interactive mode (read from stdin)\n"
           "  -s <size>\n"
           "        Set arena size\n");
   exit(status);
 }
 
-static void ReadEvaluatePrint(FeContext* context, FILE* input) {
-  size_t gc = FeSaveGC(context);
+static size_t ReadEvaluatePrint(FeContext* context, FILE* input, size_t gc) {
   while (true) {
     FeRestoreGC(context, gc);
     if (input == stdin) {
@@ -62,12 +61,13 @@ static void ReadEvaluatePrint(FeContext* context, FILE* input) {
       printf("\n");
     }
   }
+  return FeSaveGC(context);
 }
 
 int main(int count, char* arguments[]) {
   // Parse command line options:
   size_t arena_size = 64 * 1024;
-  bool ignore_exceptions = false;
+  bool interactive = false;
   bool program_literal = false;
   while (true) {
     int ch = getopt(count, arguments, "ehis:");
@@ -81,7 +81,7 @@ int main(int count, char* arguments[]) {
       case 'h':
         PrintHelp(EXIT_SUCCESS);
       case 'i':
-        ignore_exceptions = true;
+        interactive = true;
         break;
       case 's': {
         char* end = NULL;
@@ -104,24 +104,30 @@ int main(int count, char* arguments[]) {
   FexInstallIO(context);
   FexInstallMath(context);
 
-  // Get the input program:
-  FILE* input = stdin;
-  if (count > 0) {
-    char* a = arguments[0];
-    input = program_literal ? fmemopen(a, strlen(a), "rb") : fopen(a, "rb");
-    if (!input) {
-      FeHandleError(context, "could not open input file");
-    }
-  }
-
-  if (input == stdin || ignore_exceptions) {
+  if (interactive) {
     setjmp(top_level);
     FeGetHandlers(context)->error = HandleError;
   }
-  ReadEvaluatePrint(context, input);
 
-  if (fclose(input)) {
-    perror("could not close input");
+  size_t gc = FeSaveGC(context);
+  for (int i = 0; i < count; i++) {
+    char* a = arguments[i];
+    FILE* input =
+        program_literal ? fmemopen(a, strlen(a), "rb") : fopen(a, "rb");
+    if (!input) {
+      FeHandleError(context, "could not open input file");
+    }
+    gc = ReadEvaluatePrint(context, input, gc);
+    if (fclose(input)) {
+      perror("could not close input");
+    }
   }
+
+  if (count == 0 || interactive) {
+    setjmp(top_level);
+    FeGetHandlers(context)->error = HandleError;
+    ReadEvaluatePrint(context, stdin, gc);
+  }
+
   free(arena);
 }

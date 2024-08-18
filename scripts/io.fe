@@ -2,7 +2,9 @@
 (assert (not (is f nil)))
 (assert (is (close-file f) nil))
 
-(= g (fn (name) (open-file name "r")))
-(g "goat")
-
-(close-file 2)
+;; TODO: Death tests will have to go in their own files, since we don't ignore
+;; exceptions in non-interactive mode.
+;;
+;; (= g (fn (name) (open-file name "r")))
+;; (g "goat")
+;; (close-file 2)
