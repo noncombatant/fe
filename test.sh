@@ -1,31 +1,41 @@
 #!/usr/bin/env bash
 
 failed=0
-for s in scripts/*; do
-    b=$(basename "$s")
-    ./fe "$s" > out 2> err
-    if cmp out "tests/$b.out" && cmp err "tests/$b.err"; then
-        echo "✅ $s"
+
+check_results() {
+    local expected_out=${1}
+    local expected_err=${2}
+    local comment=${3}
+    if cmp out "$expected_out" && cmp err "$expected_err"; then
+        echo "✅ $comment"
     else
-        echo "❌ $s"
+        echo "❌ $comment"
         failed=$(($failed + 1))
     fi
-done
+}
 
-./fe -e '(print "hello, world!")' > out 2> err
-if cmp out "tests/one-liner.out" && cmp err "tests/one-liner.err"; then
-    echo "✅ one-liner"
-else
-    echo "❌ one-liner"
-    failed=$(($failed + 1))
-fi
+run_test() {
+    for s in scripts/*; do
+        local b=$(basename "$s")
+        ./fe "$s" > out 2> err
+        check_results "tests/$b.out" "tests/$b.err" "$s"
+    done
+    ./fe -e '(print "hello, world!")' > out 2> err
+    check_results "tests/one-liner.out" "tests/one-liner.err" "one-liner"
+    rm out err
+}
 
-rm out err
+make clean
+make fe
+run_test
+make clean
+RELEASE=1 make fe
+run_test
 
 if [[ $failed -eq 0 ]]; then
     echo "✅ all tests passed"
-    exit 0
 else
     echo "❌ $failed tests failed"
-    exit 1
 fi
+
+exit "$failed"
