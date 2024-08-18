@@ -9,7 +9,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 
-#define FE_VERSION "1.0"
+extern const char* FeVersion;
 
 typedef double FeDouble;
 typedef struct FeObject FeObject;

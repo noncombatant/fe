@@ -17,6 +17,8 @@
 #include "fex_io.h"
 #include "fex_math.h"
 
+static const char* InterpreterVersion = "1.0";
+
 static jmp_buf top_level;
 
 static void noreturn HandleError(FeContext* ctx,
@@ -43,7 +45,8 @@ static void noreturn PrintHelp(int status) {
           "  -h    Print this help message and exit\n"
           "  -i    Interactive mode (read from stdin)\n"
           "  -s <size>\n"
-          "        Set arena size\n");
+          "        Set arena size\n"
+          "  -v    Print the version and exit\n");
   exit(status);
 }
 
@@ -71,7 +74,7 @@ int main(int count, char* arguments[]) {
   bool interactive = false;
   bool program_literal = false;
   while (true) {
-    int ch = getopt(count, arguments, "ehis:");
+    int ch = getopt(count, arguments, "ehis:v");
     if (ch == -1) {
       break;
     }
@@ -92,6 +95,13 @@ int main(int count, char* arguments[]) {
         }
         break;
       }
+      case 'v':
+        printf(
+            "Fe version: %s\n"
+            "Fex version: %s\n"
+            "Interpreter version: %s\n",
+            FeVersion, FexVersion, InterpreterVersion);
+        return 0;
       default:
         PrintHelp(EXIT_FAILURE);
     }

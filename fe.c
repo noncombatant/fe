@@ -6,12 +6,14 @@
 #include <float.h>
 #include <limits.h>
 #include <math.h>
-#include <stdbool.h>
 #include <stdarg.h>
+#include <stdbool.h>
 #include <stdnoreturn.h>
 #include <string.h>
 
 #include "fe.h"
+
+const char* FeVersion = "1.1";
 
 #define STRING_BUFFER_SIZE (sizeof(FeObject*) - 1)
 #define GC_MARK_BIT (0x2)

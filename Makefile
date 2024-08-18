@@ -1,8 +1,8 @@
 CC = clang
 CFLAGS = -Weverything -Werror -std=c2x -lm \
-  -Wno-poison-system-directories \
-  -Wno-declaration-after-statement \
-  -Wno-padded \
+	-Wno-poison-system-directories \
+	-Wno-declaration-after-statement \
+	-Wno-padded \
 	-Wno-switch-default \
 	-Wno-pre-c23-compat \
 	-Wno-unsafe-buffer-usage \

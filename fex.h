@@ -6,6 +6,8 @@
 
 #include "fe.h"
 
+extern const char* FexVersion;
+
 enum {
   FexTError = FeTFex0,
   FexTFile = FeTFex1,

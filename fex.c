@@ -3,6 +3,8 @@
 
 #include "fex.h"
 
+const char* FexVersion = "0.1";
+
 void FexInstallNativeFn(FeContext* ctx, const char* name, FeNativeFn fn) {
   type_names[FexTError] = "error";
   type_names[FexTFile] = "file";
