@@ -68,10 +68,10 @@ printf("result: %g\n", FeToNumber(ctx, result));
 FeRestoreGC(ctx, gc);
 ```
 
-## Extending The Core: Fex
+## Extending The Core
 
-For the full details of the Fex extension API, refer to `fex.h`. Here is an
-overview.
+For examples of using the extension API in full detail, refer to `fex.[ch]` and
+`fex_*.[ch]`. Here is an overview.
 
 ### Exposing A C Function
 

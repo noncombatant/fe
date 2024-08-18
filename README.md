@@ -7,14 +7,23 @@ rxi](https://github.com/rxi/fe).
 
 ## Overview
 
-* Supports numbers, symbols, strings, pairs, lambdas, macros
-* Lexically scoped variables, closures
+The language offers the following features:
+
+* Numbers, symbols, strings, pairs, lambdas, and macros
+* Lexically scoped variables
+* Closures
+* Variadic functions
+* Mark-and-sweep garbage collector
+* Stack traceback on error
+
+The implementation aims to fulfill the following goals:
+
+* Practical for small scripts (extension scripts, configuration files)
 * Small memory usage within a fixed-size, caller-allocated arena — no `malloc`s
 * Simple mark-and-sweep garbage collector
 * Easy-to-use C API
-* Portable C — works on 32- and 64-bit
-* Concise — the core language is about 1,100 source lines
-* Extensible — a modular extension API, Fex, allows the core to remain stable
+* Concise, readable, and portable implementation
+* Extensible — an extension API allows the core to remain small and stable
 
 ## Documentation
 
