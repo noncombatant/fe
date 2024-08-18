@@ -20,6 +20,7 @@
 #define COUNT(a) (sizeof((a)) / sizeof((a)[0]))
 
 typedef enum Primitive {
+  PAssert,
   PLet,
   PSet,
   PIf,
@@ -51,15 +52,15 @@ typedef enum Primitive {
 } Primitive;
 
 static const char* primitive_names[] = {
-    [PLet] = "let",      [PSet] = "=",         [PIf] = "if",
-    [PFn] = "fn",        [PMacro] = "macro",   [PWhile] = "while",
-    [PQuote] = "quote",  [PAnd] = "and",       [POr] = "or",
-    [PDo] = "do",        [PCons] = "cons",     [PCar] = "car",
-    [PCdr] = "cdr",      [PSetCar] = "setcar", [PSetCdr] = "setcdr",
-    [PList] = "list",    [PNot] = "not",       [PIs] = "is",
-    [PAtom] = "atom",    [PPrint] = "print",   [PLess] = "<",
-    [PLessEqual] = "<=", [PAdd] = "+",         [PSub] = "-",
-    [PMul] = "*",        [PDiv] = "/"};
+    [PAssert] = "assert", [PLet] = "let",      [PSet] = "=",
+    [PIf] = "if",         [PFn] = "fn",        [PMacro] = "macro",
+    [PWhile] = "while",   [PQuote] = "quote",  [PAnd] = "and",
+    [POr] = "or",         [PDo] = "do",        [PCons] = "cons",
+    [PCar] = "car",       [PCdr] = "cdr",      [PSetCar] = "setcar",
+    [PSetCdr] = "setcdr", [PList] = "list",    [PNot] = "not",
+    [PIs] = "is",         [PAtom] = "atom",    [PPrint] = "print",
+    [PLess] = "<",        [PLessEqual] = "<=", [PAdd] = "+",
+    [PSub] = "-",         [PMul] = "*",        [PDiv] = "/"};
 
 const char* type_names[] = {[FeTPair] = "pair",
                             [FeTFree] = "free",
@@ -818,6 +819,12 @@ static FeObject* Evaluate(FeContext* ctx,
   switch (FeGetType(fn)) {
     case FeTPrimitive:
       switch (GetP(fn)) {
+        case PAssert:
+          va = EVAL_ARG();
+          if (FeIsNil(va)) {
+            FeHandleError(ctx, "assertion failure");
+          }
+          break;
         case PLet:
           va = CheckType(ctx, FeGetNextArgument(ctx, &arg), FeTSymbol);
           if (newenv) {
