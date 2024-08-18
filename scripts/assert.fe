@@ -6,3 +6,22 @@
 
 (= assert-not-nil (fn value)
     (not (assert-is nil value)))
+
+(= equals (fn (a b)
+  (if (and (atom a) (atom b))
+    (is a b)
+    (do
+      (while (and a b (equals (car a) (car b)))
+        (= a (cdr a))
+        (= b (cdr b)))
+      (and (is nil a) (is nil b))))))
+
+(assert (equals 1 1))
+(assert (equals 'hello 'hello))
+(assert (equals '("hello" "world") '("hello" "world")))
+(assert (equals '('("wow") 1) '('("wow") 1)))
+(assert (not (equals '('("wow") 1) '('("wow") 2))))
+(assert (not (equals '('("bow") 1) '('("wow") 1))))
+
+(= assert-equals (fn expectation value)
+    (assert (equals expectation value)))
