@@ -50,15 +50,35 @@ typedef enum Primitive {
 } Primitive;
 
 static const char* primitive_names[] = {
-    "let",  "=",     "if",  "fn",  "macro",  "while",  "quote", "and", "or",
-    "do",   "cons",  "car", "cdr", "setcar", "setcdr", "list",  "not", "is",
-    "atom", "print", "<",   "<=",  "+",      "-",      "*",     "/"};
+    [PLet] = "let",      [PSet] = "=",         [PIf] = "if",
+    [PFn] = "fn",        [PMacro] = "macro",   [PWhile] = "while",
+    [PQuote] = "quote",  [PAnd] = "and",       [POr] = "or",
+    [PDo] = "do",        [PCons] = "cons",     [PCar] = "car",
+    [PCdr] = "cdr",      [PSetCar] = "setcar", [PSetCdr] = "setcdr",
+    [PList] = "list",    [PNot] = "not",       [PIs] = "is",
+    [PAtom] = "atom",    [PPrint] = "print",   [PLess] = "<",
+    [PLessEqual] = "<=", [PAdd] = "+",         [PSub] = "-",
+    [PMul] = "*",        [PDiv] = "/"};
 
-// TODO: Make this public so that Fex callers can supply their own names.
-static const char* type_names[] = {
-    "pair",  "free", "nil",       "double", "symbol", "string", "fn",
-    "macro", "prim", "native-fn", "ptr",    "fex0",   "fex1",   "fex2",
-    "fex3",  "fex4", "fex5",      "fex6",   "fex7"};
+const char* type_names[] = {[FeTPair] = "pair",
+                            [FeTFree] = "free",
+                            [FeTNil] = "nil",
+                            [FeTDouble] = "double",
+                            [FeTSymbol] = "symbol",
+                            [FeTString] = "string",
+                            [FeTFn] = "fn",
+                            [FeTMacro] = "macro",
+                            [FeTPrimitive] = "primitive",
+                            [FeTNativeFn] = "native-fn",
+                            [FeTPtr] = "ptr",
+                            [FeTFex0] = "fex0",
+                            [FeTFex1] = "fex1",
+                            [FeTFex2] = "fex2",
+                            [FeTFex3] = "fex3",
+                            [FeTFex4] = "fex4",
+                            [FeTFex5] = "fex5",
+                            [FeTFex6] = "fex6",
+                            [FeTFex7] = "fex7"};
 
 typedef union {
   FeObject* o;

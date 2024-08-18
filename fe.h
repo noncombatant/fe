@@ -60,6 +60,8 @@ typedef enum FeType {
   FeTSentinel,
 } FeType;
 
+extern const char* type_names[];
+
 extern FeObject nil;
 
 FeContext* FeOpenContext(void* ptr, size_t size);
