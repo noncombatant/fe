@@ -71,8 +71,8 @@ FeHandlers* FeGetHandlers(FeContext* ctx);
 void FeHandleError(FeContext* ctx, const char* msg);
 FeObject* FeGetNextArgument(FeContext* ctx, FeObject** arg);
 
-FeType FeGetType(FeContext* ctx, FeObject* obj);
-bool FeIsNil(FeContext* ctx, FeObject* obj);
+FeType FeGetType(FeObject* obj);
+bool FeIsNil(FeObject* obj);
 
 void FePushGC(FeContext* ctx, FeObject* obj);
 void FeRestoreGC(FeContext* ctx, size_t idx);

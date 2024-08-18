@@ -106,21 +106,12 @@ static FeDouble GetDouble(const FeObject* o) {
   return o->cdr.n;
 }
 
-// TODO: Replace uses of this and `IsNil` with `FeGetType` and `FeIsNil`.
-static FeType GetType(const FeObject* o) {
-  return (FeType)(TAG(o) & 0x1 ? TAG(o) >> 2 : FeTPair);
-}
-
 static FeNativeFn* GetNativeFn(const FeObject* o) {
   return o->cdr.f;
 }
 
 static char GetP(const FeObject* o) {
   return o->cdr.c;
-}
-
-static bool IsNil(const FeObject* o) {
-  return o == &nil;
 }
 
 // TODO: When we use a real enum for type, update this.
@@ -175,7 +166,7 @@ void noreturn FeHandleError(FeContext* ctx, const char* msg) {
     ctx->handlers.error(ctx, msg, cl);
   }
   fprintf(stderr, "error: %s\n", msg);
-  for (; !IsNil(cl); cl = CDR(cl)) {
+  for (; !FeIsNil(cl); cl = CDR(cl)) {
     char buf[64];
     FeToString(ctx, CAR(cl), buf, sizeof(buf));
     fprintf(stderr, "=> %s\n", buf);
@@ -185,8 +176,8 @@ void noreturn FeHandleError(FeContext* ctx, const char* msg) {
 
 FeObject* FeGetNextArgument(FeContext* ctx, FeObject** arg) {
   FeObject* a = *arg;
-  if (GetType(a) != FeTPair) {
-    if (IsNil(a)) {
+  if (FeGetType(a) != FeTPair) {
+    if (FeIsNil(a)) {
       FeHandleError(ctx, "too few arguments");
     }
     FeHandleError(ctx, "dotted pair in argument list");
@@ -200,21 +191,21 @@ static const char* GetTypeName(FeType type) {
 }
 
 static FeObject* CheckType(FeContext* ctx, FeObject* obj, FeType type) {
-  if (GetType(obj) != type) {
+  if (FeGetType(obj) != type) {
     char message[64];
     Format(message, sizeof(message), "expected %s, got %s", GetTypeName(type),
-           GetTypeName(GetType(obj)));
+           GetTypeName(FeGetType(obj)));
     FeHandleError(ctx, message);
   }
   return obj;
 }
 
-FeType FeGetType(FeContext*, FeObject* obj) {
-  return (FeType)GetType(obj);
+FeType FeGetType(FeObject* obj) {
+  return (FeType)(TAG(obj) & 0x1 ? TAG(obj) >> 2 : FeTPair);
 }
 
-bool FeIsNil(FeContext*, FeObject* obj) {
-  return IsNil(obj);
+bool FeIsNil(FeObject* obj) {
+  return obj == &nil;
 }
 
 void FePushGC(FeContext* ctx, FeObject* obj) {
@@ -241,7 +232,7 @@ begin:
   car = CAR(obj); /* store car before modifying it with GC_MARK_BIT */
   TAG(obj) |= GC_MARK_BIT;
 
-  switch (GetType(obj)) {
+  switch (FeGetType(obj)) {
     case FeTPair:
       FeMark(ctx, car);
       /* fall through */
@@ -289,11 +280,11 @@ static void CollectGarbage(FeContext* ctx) {
   // Sweep and unmark:
   for (size_t i = 0; i < ctx->object_count; i++) {
     FeObject* obj = &ctx->objects[i];
-    if (GetType(obj) == FeTFree) {
+    if (FeGetType(obj) == FeTFree) {
       continue;
     }
     if (~TAG(obj) & GC_MARK_BIT) {
-      if (GetType(obj) == FeTPtr && ctx->handlers.gc) {
+      if (FeGetType(obj) == FeTPtr && ctx->handlers.gc) {
         ctx->handlers.gc(ctx, obj);
       }
       SetType(obj, FeTFree);
@@ -335,14 +326,14 @@ static bool Equal(FeObject* a, FeObject* b) {
   if (a == b) {
     return true;
   }
-  if (GetType(a) != GetType(b)) {
+  if (FeGetType(a) != FeGetType(b)) {
     return false;
   }
-  if (GetType(a) == FeTDouble) {
+  if (FeGetType(a) == FeTDouble) {
     return IsNearlyEqual(GetDouble(a), GetDouble(b), DBL_EPSILON);
   }
-  if (GetType(a) == FeTString) {
-    for (; !IsNil(a); a = CDR(a), b = CDR(b)) {
+  if (FeGetType(a) == FeTString) {
+    for (; !FeIsNil(a); a = CDR(a), b = CDR(b)) {
       if (CAR(a) != CAR(b)) {
         return false;
       }
@@ -353,7 +344,7 @@ static bool Equal(FeObject* a, FeObject* b) {
 }
 
 static int IsStringEqual(FeObject* obj, const char* str) {
-  while (!IsNil(obj)) {
+  while (!FeIsNil(obj)) {
     for (size_t i = 0; i < STRING_BUFFER_SIZE; i++) {
       if (STRING_BUFFER(obj)[i] != *str) {
         return 0;
@@ -369,9 +360,9 @@ static int IsStringEqual(FeObject* obj, const char* str) {
 
 static FeObject* MakeObject(FeContext* ctx) {
   // Run GC if free_list has no more objects:
-  if (IsNil(ctx->free_list)) {
+  if (FeIsNil(ctx->free_list)) {
     CollectGarbage(ctx);
-    if (IsNil(ctx->free_list)) {
+    if (FeIsNil(ctx->free_list)) {
       FeHandleError(ctx, "out of memory");
     }
   }
@@ -426,7 +417,7 @@ FeObject* FeMakeString(FeContext* ctx, const char* str) {
 FeObject* FeMakeSymbol(FeContext* ctx, const char* name) {
   FeObject* obj;
   /* try to find in symbol_list */
-  for (obj = ctx->symbol_list; !IsNil(obj); obj = CDR(obj)) {
+  for (obj = ctx->symbol_list; !FeIsNil(obj); obj = CDR(obj)) {
     if (IsStringEqual(CAR(CDR(CAR(obj))), name)) {
       return CAR(obj);
     }
@@ -462,14 +453,14 @@ FeObject* FeMakeList(FeContext* ctx, FeObject** objs, size_t n) {
 }
 
 FeObject* FeCar(FeContext* ctx, FeObject* obj) {
-  if (IsNil(obj)) {
+  if (FeIsNil(obj)) {
     return obj;
   }
   return CAR(CheckType(ctx, obj, FeTPair));
 }
 
 FeObject* FeCdr(FeContext* ctx, FeObject* obj) {
-  if (IsNil(obj)) {
+  if (FeIsNil(obj)) {
     return obj;
   }
   return CDR(CheckType(ctx, obj, FeTPair));
@@ -486,7 +477,7 @@ static void WriteString(FeContext* ctx,
 
 void FeWrite(FeContext* ctx, FeObject* obj, FeWriteFn fn, void* udata, int qt) {
   char buf[32];
-  switch (GetType(obj)) {
+  switch (FeGetType(obj)) {
     case FeTNil:
       WriteString(ctx, fn, udata, "nil");
       break;
@@ -501,12 +492,12 @@ void FeWrite(FeContext* ctx, FeObject* obj, FeWriteFn fn, void* udata, int qt) {
       while (true) {
         FeWrite(ctx, CAR(obj), fn, udata, 1);
         obj = CDR(obj);
-        if (GetType(obj) != FeTPair) {
+        if (FeGetType(obj) != FeTPair) {
           break;
         }
         fn(ctx, udata, ' ');
       }
-      if (!IsNil(obj)) {
+      if (!FeIsNil(obj)) {
         WriteString(ctx, fn, udata, " . ");
         FeWrite(ctx, obj, fn, udata, 1);
       }
@@ -521,7 +512,7 @@ void FeWrite(FeContext* ctx, FeObject* obj, FeWriteFn fn, void* udata, int qt) {
       if (qt) {
         fn(ctx, udata, '"');
       }
-      while (!IsNil(obj)) {
+      while (!FeIsNil(obj)) {
         for (size_t i = 0; i < STRING_BUFFER_SIZE && STRING_BUFFER(obj)[i];
              i++) {
           if (qt && STRING_BUFFER(obj)[i] == '"') {
@@ -550,7 +541,7 @@ void FeWrite(FeContext* ctx, FeObject* obj, FeWriteFn fn, void* udata, int qt) {
     case FeTFex5:
     case FeTFex6:
     case FeTFex7:
-      Format(buf, sizeof(buf), "[%s %p]", GetTypeName(GetType(obj)),
+      Format(buf, sizeof(buf), "[%s %p]", GetTypeName(FeGetType(obj)),
              (void*)obj);
       WriteString(ctx, fn, udata, buf);
       break;
@@ -594,7 +585,7 @@ FeDouble FeToDouble(FeContext* ctx, FeObject* obj) {
 }
 
 void* FeToPtr(FeContext*, FeObject* obj) {
-  const FeType type = GetType(obj);
+  const FeType type = FeGetType(obj);
   if (type >= FeTSentinel) {
     abort();
   }
@@ -603,7 +594,7 @@ void* FeToPtr(FeContext*, FeObject* obj) {
 
 static FeObject* GetBound(FeObject* sym, FeObject* env) {
   // Try to find the symbol in the environment:
-  for (; !IsNil(env); env = CDR(env)) {
+  for (; !FeIsNil(env); env = CDR(env)) {
     FeObject* x = CAR(env);
     if (CAR(x) == sym) {
       return x;
@@ -652,7 +643,7 @@ static FeObject* Read(FeContext* ctx, FeReadFn fn, void* udata) {
         if (v == NULL) {
           FeHandleError(ctx, "unclosed list");
         }
-        if (GetType(v) == FeTSymbol && IsStringEqual(CAR(CDR(v)), ".")) {
+        if (FeGetType(v) == FeTSymbol && IsStringEqual(CAR(CDR(v)), ".")) {
           /* dotted pair */
           *tail = FeRead(ctx, fn, udata);
         } else {
@@ -747,7 +738,7 @@ static FeObject* Evaluate(FeContext* ctx,
 static FeObject* EvaluateList(FeContext* ctx, FeObject* lst, FeObject* env) {
   FeObject* res = &nil;
   FeObject** tail = &res;
-  while (!IsNil(lst)) {
+  while (!FeIsNil(lst)) {
     *tail = FeCons(ctx, Evaluate(ctx, FeGetNextArgument(ctx, &lst), env, NULL),
                    &nil);
     tail = &CDR(*tail);
@@ -758,7 +749,7 @@ static FeObject* EvaluateList(FeContext* ctx, FeObject* lst, FeObject* env) {
 static FeObject* DoList(FeContext* ctx, FeObject* lst, FeObject* env) {
   FeObject* res = &nil;
   size_t save = FeSaveGC(ctx);
-  while (!IsNil(lst)) {
+  while (!FeIsNil(lst)) {
     FeRestoreGC(ctx, save);
     FePushGC(ctx, lst);
     FePushGC(ctx, env);
@@ -771,8 +762,8 @@ static FeObject* ArgsToEnv(FeContext* ctx,
                            FeObject* prm,
                            FeObject* arg,
                            FeObject* env) {
-  while (!IsNil(prm)) {
-    if (GetType(prm) != FeTPair) {
+  while (!FeIsNil(prm)) {
+    if (FeGetType(prm) != FeTPair) {
       env = FeCons(ctx, FeCons(ctx, prm, arg), env);
       break;
     }
@@ -788,7 +779,7 @@ static FeObject* ArgsToEnv(FeContext* ctx,
 #define ARITH_OP(op)                          \
   {                                           \
     FeDouble x = FeToDouble(ctx, EVAL_ARG()); \
-    while (!IsNil(arg)) {                     \
+    while (!FeIsNil(arg)) {                   \
       x = x op FeToDouble(ctx, EVAL_ARG());   \
     }                                         \
     res = FeMakeDouble(ctx, x);               \
@@ -805,10 +796,10 @@ static FeObject* Evaluate(FeContext* ctx,
                           FeObject* obj,
                           FeObject* env,
                           FeObject** newenv) {
-  if (GetType(obj) == FeTSymbol) {
+  if (FeGetType(obj) == FeTSymbol) {
     return CDR(GetBound(obj, env));
   }
-  if (GetType(obj) != FeTPair) {
+  if (FeGetType(obj) != FeTPair) {
     return obj;
   }
 
@@ -824,7 +815,7 @@ static FeObject* Evaluate(FeContext* ctx,
   FeObject* va;
   FeObject* vb;
 
-  switch (GetType(fn)) {
+  switch (FeGetType(fn)) {
     case FeTPrimitive:
       switch (GetP(fn)) {
         case PLet:
@@ -840,13 +831,13 @@ static FeObject* Evaluate(FeContext* ctx,
           break;
 
         case PIf:
-          while (!IsNil(arg)) {
+          while (!FeIsNil(arg)) {
             va = EVAL_ARG();
-            if (!IsNil(va)) {
-              res = IsNil(arg) ? va : EVAL_ARG();
+            if (!FeIsNil(va)) {
+              res = FeIsNil(arg) ? va : EVAL_ARG();
               break;
             }
-            if (IsNil(arg)) {
+            if (FeIsNil(arg)) {
               break;
             }
             arg = CDR(arg);
@@ -865,7 +856,7 @@ static FeObject* Evaluate(FeContext* ctx,
         case PWhile: {
           va = FeGetNextArgument(ctx, &arg);
           size_t n = FeSaveGC(ctx);
-          while (!IsNil(Evaluate(ctx, va, env, NULL))) {
+          while (!FeIsNil(Evaluate(ctx, va, env, NULL))) {
             DoList(ctx, arg, env);
             FeRestoreGC(ctx, n);
           }
@@ -877,12 +868,12 @@ static FeObject* Evaluate(FeContext* ctx,
           break;
 
         case PAnd:
-          while (!IsNil(arg) && !IsNil(res = EVAL_ARG()))
+          while (!FeIsNil(arg) && !FeIsNil(res = EVAL_ARG()))
             ;
           break;
 
         case POr:
-          while (!IsNil(arg) && IsNil(res = EVAL_ARG()))
+          while (!FeIsNil(arg) && FeIsNil(res = EVAL_ARG()))
             ;
           break;
 
@@ -918,7 +909,7 @@ static FeObject* Evaluate(FeContext* ctx,
           break;
 
         case PNot:
-          res = FeMakeBool(ctx, IsNil(EVAL_ARG()));
+          res = FeMakeBool(ctx, FeIsNil(EVAL_ARG()));
           break;
 
         case PIs:
@@ -927,13 +918,13 @@ static FeObject* Evaluate(FeContext* ctx,
           break;
 
         case PAtom:
-          res = FeMakeBool(ctx, FeGetType(ctx, EVAL_ARG()) != FeTPair);
+          res = FeMakeBool(ctx, FeGetType(EVAL_ARG()) != FeTPair);
           break;
 
         case PPrint:
-          while (!IsNil(arg)) {
+          while (!FeIsNil(arg)) {
             FeWriteFile(ctx, EVAL_ARG(), stdout);
-            if (!IsNil(arg)) {
+            if (!FeIsNil(arg)) {
               printf(" ");
             }
           }
