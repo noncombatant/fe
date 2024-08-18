@@ -7,6 +7,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <stdnoreturn.h>
+#include <string.h>
 #include <unistd.h>
 
 #include "fe.h"
@@ -44,6 +45,31 @@ static void noreturn PrintHelp(int status) {
   exit(status);
 }
 
+typedef struct StringFile {
+  char* string;
+  size_t length;
+  size_t position;
+} StringFile;
+
+#define MIN(a, b) (a) < (b) ? (a) : (b)
+
+static int Read(void* cookie, char* buffer, int size) {
+  if (size <= 0) {
+    return size;
+  }
+
+  StringFile* s = cookie;
+  if (s->position >= s->length) {
+    return 0;
+  }
+
+  const size_t remaining = s->length - s->position;
+  const size_t n = MIN((size_t)size, remaining);
+  memcpy(buffer, s->string + s->position, n);
+  s->position += n;
+  return (int)n;
+}
+
 static void ReadEvaluatePrint(FeContext* context, FILE* input) {
   size_t gc = FeSaveGC(context);
   while (true) {
@@ -67,12 +93,16 @@ int main(int count, char* arguments[]) {
   // Parse command line options:
   size_t arena_size = 64 * 1024;
   bool ignore_exceptions = false;
+  bool program_literal = false;
   while (true) {
-    int ch = getopt(count, arguments, "his:");
+    int ch = getopt(count, arguments, "ehis:");
     if (ch == -1) {
       break;
     }
     switch (ch) {
+      case 'e':
+        program_literal = true;
+        break;
       case 'h':
         PrintHelp(EXIT_SUCCESS);
       case 'i':
@@ -99,16 +129,27 @@ int main(int count, char* arguments[]) {
   FexInstallIO(context);
   FexInstallMath(context);
 
-  FILE* input = count > 0 ? fopen(arguments[0], "rb") : stdin;
-  if (!input) {
-    FeHandleError(context, "could not open input file");
+  // Get the input program:
+  FILE* input = stdin;
+  StringFile program;
+  if (count > 0) {
+    const char* a = arguments[0];
+    if (program_literal) {
+      program = (StringFile){.string = a, .length = strlen(a), .position = 0};
+      // TODO: Use `fopencookie` on Linux.
+      input = fropen(&program, Read);
+    } else {
+      input = fopen(a, "rb");
+    }
+    if (!input) {
+      FeHandleError(context, "could not open input file");
+    }
   }
 
   if (input == stdin || ignore_exceptions) {
     setjmp(top_level);
     FeGetHandlers(context)->error = HandleError;
   }
-
   ReadEvaluatePrint(context, input);
 
   free(arena);
