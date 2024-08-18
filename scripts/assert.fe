@@ -16,12 +16,15 @@
         (= b (cdr b)))
       (and (is nil a) (is nil b))))))
 
-(assert (equals 1 1))
-(assert (equals 'hello 'hello))
-(assert (equals '("hello" "world") '("hello" "world")))
-(assert (equals '('("wow") 1) '('("wow") 1)))
-(assert (not (equals '('("wow") 1) '('("wow") 2))))
-(assert (not (equals '('("bow") 1) '('("wow") 1))))
-
 (= assert-equals (fn expectation value)
     (assert (equals expectation value)))
+
+(= assert-not-equals (fn expectation value)
+    (not (assert-equals expectation value)))
+
+(assert-equals 1 1)
+(assert-equals 'hello 'hello)
+(assert-equals '("hello" "world") '("hello" "world"))
+(assert-equals '('("wow") 1) '('("wow") 1))
+(assert-not-equals '('("wow") 1) '('("wow") 2))
+(assert-not-equals '('("bow") 1) '('("wow") 1))
