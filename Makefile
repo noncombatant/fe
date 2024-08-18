@@ -5,7 +5,7 @@ CFLAGS = -Weverything -Werror -std=c2x \
   -Wno-padded
 
 ifdef RELEASE
-	CFLAGS += -O3
+	CFLAGS += -O3 -fsanitize=undefined -fsanitize-trap=all
 else
 	CFLAGS += -g -O3 -fsanitize=address -fsanitize=undefined -fsanitize-trap=all
 endif
