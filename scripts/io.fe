@@ -1,5 +1,6 @@
 (= f (open-file "fe.c" "r"))
 (assert (not (is f nil)))
+(assert (is "// Copyright 2020 rxi, https://github.com/rxi/fe\n" (read-file f "\n")))
 (assert (is (close-file f) nil))
 
 ;; TODO: Death tests will have to go in their own files, since we don't ignore
