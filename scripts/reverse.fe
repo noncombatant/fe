@@ -9,4 +9,13 @@
 
 (= animals '("cat" "dog" "fox"))
 
+(= equals (fn (a b)
+  (while (and a b (is (car a) (car b)))
+    (= a (cdr a))
+    (= b (cdr b)))
+  (and (is nil a) (is nil b))))
+
 (print (reverse animals)) ; => ("fox" "dog" "cat")
+(assert (equals '("fox" "dog" "cat") (reverse animals)))
+(assert (equals animals animals))
+(assert (equals (reverse animals) (reverse animals)))
