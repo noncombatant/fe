@@ -559,24 +559,24 @@ void FeWriteFile(FeContext* ctx, FeObject* obj, FILE* fp) {
   FeWrite(ctx, obj, WriteFile, fp, 0);
 }
 
-typedef struct {
-  char* p;
-  size_t n;
-} CharPtrInt;  // TODO: Not the clearest name
+typedef struct SizedString {
+  char* string;
+  size_t size;
+} SizedString;
 
 static void WriteBuffer(FeContext*, void* udata, char chr) {
-  CharPtrInt* x = udata;
-  if (x->n) {
-    *x->p++ = chr;
-    x->n--;
+  SizedString* s = udata;
+  if (s->size) {
+    *s->string++ = chr;
+    s->size--;
   }
 }
 
 size_t FeToString(FeContext* ctx, FeObject* obj, char* dst, size_t size) {
-  CharPtrInt x = {.p = dst, .n = size - 1};
-  FeWrite(ctx, obj, WriteBuffer, &x, 0);
-  *x.p = '\0';
-  return size - x.n - 1;
+  SizedString s = {.string = dst, .size = size - 1};
+  FeWrite(ctx, obj, WriteBuffer, &s, 0);
+  *s.string = '\0';
+  return size - s.size - 1;
 }
 
 FeDouble FeToDouble(FeContext* ctx, FeObject* obj) {
