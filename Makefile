@@ -1,8 +1,13 @@
 CC = clang
-CFLAGS = -Weverything -Werror -std=c2x \
+CFLAGS = -Weverything -Werror -std=c2x -lm \
   -Wno-poison-system-directories \
   -Wno-declaration-after-statement \
-  -Wno-padded
+  -Wno-padded \
+	-Wno-switch-default \
+	-Wno-pre-c23-compat \
+	-Wno-unsafe-buffer-usage \
+	-Wno-implicit-fallthrough \
+	-Wno-unused-command-line-argument
 
 ifdef RELEASE
 	CFLAGS += -O3 -fsanitize=undefined -fsanitize-trap=all

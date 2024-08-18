@@ -6,6 +6,13 @@
 #include "fex.h"
 #include "fex_math.h"
 
+#ifndef M_PI
+#define M_PI 3.141592653589793
+#endif
+#ifndef M_E
+#define M_E 2.718281828459045
+#endif
+
 void FexInstallMath(FeContext* ctx) {
   FexInstallNativeFn(ctx, "abs", FexAbs);
   FexInstallNativeFn(ctx, "ceiling", FexCeiling);

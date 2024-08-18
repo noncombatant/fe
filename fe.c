@@ -6,6 +6,7 @@
 #include <float.h>
 #include <limits.h>
 #include <math.h>
+#include <stdbool.h>
 #include <stdarg.h>
 #include <stdnoreturn.h>
 #include <string.h>
@@ -895,22 +896,22 @@ static FeObject* EvaluatePrimitive(FeContext* ctx,
       printf("\n");
       return res;
     case PLess:
-      NUM_CMP_OP(<);
+      NUM_CMP_OP(<)
       return res;
     case PLessEqual:
-      NUM_CMP_OP(<=);
+      NUM_CMP_OP(<=)
       return res;
     case PAdd:
-      ARITH_OP(+);
+      ARITH_OP(+)
       return res;
     case PSub:
-      ARITH_OP(-);
+      ARITH_OP(-)
       return res;
     case PMul:
-      ARITH_OP(*);
+      ARITH_OP(*)
       return res;
     case PDiv:
-      ARITH_OP(/);
+      ARITH_OP(/)
       return res;
   }
   abort();
