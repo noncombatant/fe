@@ -30,7 +30,17 @@ static void noreturn HandleError(FeContext* ctx,
 }
 
 static void noreturn PrintHelp(int status) {
-  // TODO
+  FILE* out = status == 0 ? stdout : stderr;
+  fprintf(out,
+          "fe — Fe language interpreter\n\n"
+          "Usage:\n\n"
+          "  fe -h\n"
+          "  fe [-i] [-s size] [program-file]\n\n"
+          "Options:\n\n"
+          "  -h    Print this help message and exit\n"
+          "  -i    Continue from exceptions\n"
+          "  -s <size>\n"
+          "        Set arena size\n");
   exit(status);
 }
 
