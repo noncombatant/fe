@@ -6,11 +6,7 @@ More example programs and tests
 
 Use // comments
 
-Do we really want/need both `=` and `let`?
-
 Replace `car` and `cdr` with `head` and `tail`.
-
-Add `assert`, and use it in tests and docs.
 
 Unit test all fe functions
 
@@ -22,7 +18,7 @@ Reduce/eliminate C macros — replace the remaining lvalue accessors with `Set*
 
 Finish adding the rest of math.h.
 
-Add (at least) `fopen`, `fclose`, `fread`, `fwrite`, `fflush`.
+Add (at least) `fread`, `fwrite`, `fflush`.
 
 Consider namespaces, e.g. `math.*`, `io.*`, `sys.*`, et c.
 
