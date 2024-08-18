@@ -44,6 +44,25 @@ static void noreturn PrintHelp(int status) {
   exit(status);
 }
 
+static void ReadEvaluatePrint(FeContext* context, FILE* input) {
+  size_t gc = FeSaveGC(context);
+  while (true) {
+    FeRestoreGC(context, gc);
+    if (input == stdin) {
+      printf("fe > ");
+    }
+    FeObject* object = FeReadFile(context, input);
+    if (object == NULL) {
+      break;
+    }
+    object = FeEvaluate(context, object);
+    if (input == stdin) {
+      FeWriteFile(context, object, stdout);
+      printf("\n");
+    }
+  }
+}
+
 int main(int count, char* arguments[]) {
   // Parse command line options:
   size_t arena_size = 64 * 1024;
@@ -76,39 +95,21 @@ int main(int count, char* arguments[]) {
 
   // Initialize the context:
   char* arena = malloc(arena_size);
-  FeContext* ctx = FeOpenContext(arena, arena_size);
-  FexInstallIO(ctx);
-  FexInstallMath(ctx);
+  FeContext* context = FeOpenContext(arena, arena_size);
+  FexInstallIO(context);
+  FexInstallMath(context);
 
-  FILE* input = stdin;
-  if (count > 0) {
-    input = fopen(arguments[0], "rb");
-    if (!input) {
-      FeHandleError(ctx, "could not open input file");
-    }
+  FILE* input = count > 0 ? fopen(arguments[0], "rb") : stdin;
+  if (!input) {
+    FeHandleError(context, "could not open input file");
   }
 
   if (input == stdin || ignore_exceptions) {
-    FeGetHandlers(ctx)->error = HandleError;
+    setjmp(top_level);
+    FeGetHandlers(context)->error = HandleError;
   }
-  size_t gc = FeSaveGC(ctx);
-  setjmp(top_level);
 
-  // REPL:
-  while (true) {
-    FeRestoreGC(ctx, gc);
-    if (input == stdin) {
-      printf("fe > ");
-    }
-    FeObject* obj = FeReadFile(ctx, input);
-    if (obj == NULL) {
-      break;
-    }
-    obj = FeEvaluate(ctx, obj);
-    if (input == stdin) {
-      FeWriteFile(ctx, obj, stdout);
-      printf("\n");
-    }
-  }
+  ReadEvaluatePrint(context, input);
+
   free(arena);
 }
