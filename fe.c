@@ -42,6 +42,7 @@ typedef enum Primitive {
   PPrint,
   PLess,
   PLessEqual,
+  // TODO: Add > and >=, and document them.
   PAdd,
   PSub,
   PMul,

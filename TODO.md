@@ -11,6 +11,10 @@ load and run more than one file, if more are given.
 
 Do we really want/need both `=` and `let`?
 
+Replace `car` and `cdr` with `head` and `tail`.
+
+Add `assert`, and use it in tests and docs.
+
 Unit test all fe functions
 
 When available, use `constexpr` instead of `#define`

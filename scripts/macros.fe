@@ -1,28 +1,12 @@
-;; For example, we could define the following macro to increment a value by one:
-
-(= incr
+(= ++
   (macro (sym)
     (list '= sym (list '+ sym 1))))
-
-;; And use it in the following while loop:
 
 (= i 0)
 (while (< i 10)
   (print i)
-  (incr i))
+  (++ i))
 
-;; Upon the first call to `incr`, the program code would be modified in place,
-;; replacing the call to the macro with the code it generated:
-;;
-;; ```clojure
-;; (= i 0)
-;; (while (< i 0)
-;;   (print i)
-;;   (= i (+ i 1)))
-;; ```
-;;
-;; Subsequent iterations of the loop would run the new code which now exists where
-;; the macro call was originally.
 
 (= push (macro (val lst)
   (list '= lst (list 'cons val lst))
