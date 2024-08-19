@@ -1,24 +1,29 @@
-declarations at first use
+Declarations at first use throughout.
 
-const as much as possible
+`const` as much as possible.
 
-More example programs and tests
+More example programs and tests.
 
-Use // comments
+Use `//` comments.
 
-Replace `car` and `cdr` with `head` and `tail`.
+Replace `car` and `cdr` with `head` and `tail`, but keep `car`/`cdr` for
+historical flair.
 
-Unit test all fe functions
+Unit test all fe functions.
 
-When available, use `constexpr` instead of `#define`
+When available, use `constexpr` instead of `#define`.
 
-Use readline in main
+Use `readline` in main?
 
-Reduce/eliminate C macros — replace the remaining lvalue accessors with `Set*`
+Reduce/eliminate C macros — replace the remaining lvalue accessors with `Set*`?
 
 Finish adding the rest of math.h.
 
-Add (at least) `fread`, `fwrite`, `fflush`.
+Add (at least) `fread`, `fwrite`, `fflush`, `fseeko`, `ftello`.
+
+Add a function `(sh ...)` that does `fork` and `execlp`.
+
+Add `regcomp` (as `(compile-regex ...)`) and `regexec` (as `(match-regex ...)`).
 
 Consider namespaces, e.g. `math.*`, `io.*`, `sys.*`, et c.
 
@@ -27,16 +32,17 @@ Update docs given new names and types et c.
 Turn the examples in the docs into scripts, and test them, and then refer to
 them in the docs in place of the code.
 
-help strings for symbols
+Help strings for symbols.
 
-Add GMP to Fex for better numbers.
+Add GMP to Fex (or core Fe?) for better numbers.
 
-Use bitfields instead of shifts and ors and so on
+Use bitfields instead of shifts and ors and so on.
 
 Ensure that everything declared in fe.h really needs to be public.
 
 There's a minimum size for the arena; document and check it:
 
+```
 woop:~/code/fe % ./fe -s 1024 scripts/fib.fe 
 UndefinedBehaviorSanitizer:DEADLYSIGNAL
 ==30053==ERROR: UndefinedBehaviorSanitizer: SEGV on unknown address 0x7ff75b000000 (pc 0x0001041be4a1 bp 0x7ff7bbd47370 sp 0x7ff7bbd47310 T2700168)
@@ -54,3 +60,4 @@ UndefinedBehaviorSanitizer can not provide additional info.
 SUMMARY: UndefinedBehaviorSanitizer: SEGV (fe:x86_64+0x1000064a1) in fe_open+0x1c1
 ==30053==ABORTING
 zsh: abort      ./fe -s 1024 scripts/fib.fe
+```
