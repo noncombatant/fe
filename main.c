@@ -34,6 +34,21 @@ static void noreturn HandleError(FeContext* ctx,
   longjmp(top_level, -1);
 }
 
+static FeObject* Handle(FeContext* ctx, FeObject* args, const char* prefix) {
+  char marked[1024];
+  FeToString(ctx, args, marked, sizeof(marked));
+  fprintf(stderr, "%s: %s\n", prefix, marked);
+  return &nil;
+}
+
+static FeObject* HandleMark(FeContext* ctx, FeObject* args) {
+  return Handle(ctx, args, "mark");
+}
+
+static FeObject* HandleGC(FeContext* ctx, FeObject* args) {
+  return Handle(ctx, args, "gc");
+}
+
 static void noreturn PrintHelp(int status) {
   FILE* out = status == 0 ? stdout : stderr;
   fprintf(out,
@@ -42,11 +57,13 @@ static void noreturn PrintHelp(int status) {
           "  fe -h\n"
           "  fe [-i] [-s size] [program-file ...]\n\n"
           "Options:\n\n"
+          "  -d    Verbose debugging\n"
           "  -h    Print this help message and exit\n"
           "  -i    Interactive mode (read from stdin)\n"
           "  -s <size>\n"
           "        Set arena size\n"
-          "  -v    Print the version and exit\n");
+          "  -v    Print the version and exit\n"
+          "  -x    Do not install the Fex extensions\n");
   exit(status);
 }
 
@@ -71,14 +88,19 @@ static size_t ReadEvaluatePrint(FeContext* context, FILE* input, size_t gc) {
 int main(int count, char* arguments[]) {
   // Parse command line options:
   size_t arena_size = 64 * 1024;
-  bool interactive = false;
+  bool debugging = false;
   bool program_literal = false;
+  bool interactive = false;
+  bool extensions = true;
   while (true) {
-    int ch = getopt(count, arguments, "ehis:v");
+    int ch = getopt(count, arguments, "dehis:vx");
     if (ch == -1) {
       break;
     }
     switch (ch) {
+      case 'd':
+        debugging = true;
+        break;
       case 'e':
         program_literal = true;
         break;
@@ -99,6 +121,9 @@ int main(int count, char* arguments[]) {
         printf("Fe version: %s\nFex version: %s\nInterpreter version: %s\n",
                FeVersion, FexVersion, InterpreterVersion);
         return 0;
+      case 'x':
+        extensions = false;
+        break;
       default:
         PrintHelp(EXIT_FAILURE);
     }
@@ -110,8 +135,14 @@ int main(int count, char* arguments[]) {
   // Initialize the context:
   char* arena = malloc(arena_size);
   FeContext* context = FeOpenContext(arena, arena_size);
-  FexInstallIO(context);
-  FexInstallMath(context);
+  if (extensions) {
+    FexInstallIO(context);
+    FexInstallMath(context);
+  }
+  if (debugging) {
+    FeGetHandlers(context)->mark = HandleMark;
+    FeGetHandlers(context)->gc = HandleGC;
+  }
   if (interactive) {
     setjmp(top_level);
     FeGetHandlers(context)->error = HandleError;
