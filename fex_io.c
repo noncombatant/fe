@@ -18,13 +18,17 @@ void FexInstallIO(FeContext* ctx) {
   FexInstallNativeFn(ctx, "read-file", FexReadFile);
 }
 
-FeObject* FexCloseFile(FeContext* ctx, FeObject* arg) {
-  FeObject* file = FeGetNextArgument(ctx, &arg);
+static FeObject* GetFile(FeContext* ctx, FeObject** arg) {
+  FeObject* file = FeGetNextArgument(ctx, arg);
   const FeType type = FeGetType(file);
   if (type != FexTFile) {
     FeHandleError(ctx, "not a file");
   }
-  if (fclose(FeToPtr(ctx, file)) != 0) {
+  return file;
+}
+
+FeObject* FexCloseFile(FeContext* ctx, FeObject* arg) {
+  if (fclose(FeToPtr(ctx, GetFile(ctx, &arg))) != 0) {
     FeHandleError(ctx, strerror(errno));
   }
   return &nil;
@@ -43,17 +47,8 @@ FeObject* FexOpenFile(FeContext* ctx, FeObject* arg) {
   return FeMakePtr(ctx, FexTFile, file);
 }
 
-ssize_t getdelim(char** restrict linep,
-                 size_t* restrict linecapp,
-                 int delimiter,
-                 FILE* restrict stream);
-
 FeObject* FexReadFile(FeContext* ctx, FeObject* arg) {
-  FeObject* file = FeGetNextArgument(ctx, &arg);
-  const FeType type = FeGetType(file);
-  if (type != FexTFile) {
-    FeHandleError(ctx, "not a file");
-  }
+  FeObject* file = GetFile(ctx, &arg);
   char delimiter[16];
   (void)FeToString(ctx, FeGetNextArgument(ctx, &arg), delimiter,
                    sizeof(delimiter));
