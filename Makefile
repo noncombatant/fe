@@ -22,8 +22,12 @@ test:
 run: fe
 	./fe
 
+bench: clean
+	./bench.sh
+
 fe: main.c fe.o fex.o fex_io.o fex_math.o
 	$(CC) $(CFLAGS) -o $@ $^
 
 clean:
 	-rm -rf fe *.o *.dSYM
+	-rm -f scripts/*.csv scripts/*.times
