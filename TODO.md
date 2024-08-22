@@ -11,7 +11,7 @@ historical flair.
 
 Unit test all fe functions.
 
-When available, use `constexpr` instead of `#define`.
+When available, use `constexpr` instead of `#define`. Until then, use `enum`.
 
 Use `readline` in main?
 
@@ -61,3 +61,6 @@ SUMMARY: UndefinedBehaviorSanitizer: SEGV (fe:x86_64+0x1000064a1) in fe_open+0x1
 ==30053==ABORTING
 zsh: abort      ./fe -s 1024 scripts/fib.fe
 ```
+
+Check out every revision, build optimized, and run {mandelbrot,fib,macros}.fe 10
+times each. Write to CSV.
