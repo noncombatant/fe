@@ -16,9 +16,6 @@
 const char* FeVersion = "1.1";
 
 #define STRING_BUFFER_SIZE (sizeof(FeObject*) - 1)
-#define GC_MARK_BIT (0x2)
-// TODO: This should scale with arena size.
-#define GC_STACK_SIZE (512)
 
 #define COUNT(a) (sizeof((a)) / sizeof((a)[0]))
 
@@ -93,11 +90,21 @@ typedef union {
   char c;
 } Value;
 
+enum {
+  // Stored in bit 1 of `Value.c`:
+  ConsCell = 0,
+  OtherCell = 1,
+  GcMarkBit = 2,
+  // TODO: This should scale with arena size?
+  GcStackSize = 512,
+};
+
 struct FeObject {
   Value car, cdr;
 };
 
-FeObject nil = {{(void*)(FeTNil << 2 | 1)}, {NULL}};
+FeObject nil = {.car = {.c = FeTNil << GcMarkBit | OtherCell},
+                .cdr = {.o = NULL}};
 
 #define CAR(x) ((x)->car.o)
 #define CDR(x) ((x)->cdr.o)
@@ -120,12 +127,12 @@ static char GetP(const FeObject* o) {
 }
 
 static void SetType(FeObject* o, FeType type) {
-  o->car.c = (char)((type) << 2 | 1);
+  o->car.c = (char)((type) << GcMarkBit | OtherCell);
 }
 
 struct FeContext {
   FeHandlers handlers;
-  FeObject* gc_stack[GC_STACK_SIZE];
+  FeObject* gc_stack[GcStackSize];
   size_t gc_stack_index;
   FeObject* objects;
   size_t object_count;
@@ -205,7 +212,7 @@ static FeObject* CheckType(FeContext* ctx, FeObject* obj, FeType type) {
 }
 
 FeType FeGetType(FeObject* obj) {
-  return (FeType)(TAG(obj) & 0x1 ? TAG(obj) >> 2 : FeTPair);
+  return (FeType)(TAG(obj) & OtherCell ? TAG(obj) >> GcMarkBit : FeTPair);
 }
 
 bool FeIsNil(FeObject* obj) {
@@ -213,7 +220,7 @@ bool FeIsNil(FeObject* obj) {
 }
 
 void FePushGC(FeContext* ctx, FeObject* obj) {
-  if (ctx->gc_stack_index == GC_STACK_SIZE) {
+  if (ctx->gc_stack_index == GcStackSize) {
     FeHandleError(ctx, "GC stack overflow");
   }
   ctx->gc_stack[ctx->gc_stack_index++] = obj;
@@ -230,11 +237,11 @@ size_t FeSaveGC(FeContext* ctx) {
 void FeMark(FeContext* ctx, FeObject* obj) {
   FeObject* car;
 begin:
-  if (TAG(obj) & GC_MARK_BIT) {
+  if (TAG(obj) & GcMarkBit) {
     return;
   }
-  car = CAR(obj); /* store car before modifying it with GC_MARK_BIT */
-  TAG(obj) |= GC_MARK_BIT;
+  car = CAR(obj); /* store car before modifying it with GcMarkBit */
+  TAG(obj) |= GcMarkBit;
 
   switch (FeGetType(obj)) {
     case FeTPair:
@@ -287,7 +294,7 @@ static void CollectGarbage(FeContext* ctx) {
     if (FeGetType(obj) == FeTFree) {
       continue;
     }
-    if (~TAG(obj) & GC_MARK_BIT) {
+    if (~TAG(obj) & GcMarkBit) {
       if (FeGetType(obj) == FeTPtr && ctx->handlers.gc) {
         ctx->handlers.gc(ctx, obj);
       }
@@ -295,7 +302,7 @@ static void CollectGarbage(FeContext* ctx) {
       CDR(obj) = ctx->free_list;
       ctx->free_list = obj;
     } else {
-      TAG(obj) &= ~GC_MARK_BIT;
+      TAG(obj) &= ~GcMarkBit;
     }
   }
 }
@@ -1034,7 +1041,7 @@ FeContext* FeOpenContext(void* arena, size_t size) {
 
   // Register the built-in primitives:
   size_t save = FeSaveGC(ctx);
-  for (size_t i = PAssert; i < PSentinel; i++) {
+  for (Primitive i = PAssert; i < PSentinel; i++) {
     FeObject* v = MakeObject(ctx);
     SetType(v, FeTPrimitive);
     PRIM(v) = (char)i;
