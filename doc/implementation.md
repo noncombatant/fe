@@ -11,8 +11,8 @@ start of this memory region and uses the rest of the region to store
 
 All data is stored in fixed-sized `FeObject`s. Each object consists of a `car`
 and `cdr`. The lowest bit of an object’s `car` stores type information — if the
-object is a `PAIR` (cons cell) the lowest bit is `0`, otherwise it is `1`. The
-second-lowest bit is used by the garbage collector to mark the object and is
+object is a `FeTPair` (cons cell) the lowest bit is `0`, otherwise it is `1`.
+The second-lowest bit is used by the garbage collector to mark the object and is
 always `0` outside of the `CollectGarbage` function.
 
 Pairs use the `car` and `cdr` as pointers to other objects. As all objects are
@@ -73,7 +73,7 @@ freelist. If there are no more objects on the freelist, the garbage collector
 does a full mark-and-sweep run, pushing unreachable objects back to the
 freelist. Thus, garbage collection may occur whenever a new object is created.
 
-The context maintains a `gcstack` which protects objects that may not be
+The context maintains a `gc_stack` which protects objects that may not be
 reachable from being collected. These may include (for example) objects returned
 after an `eval`, or a list which is currently being constructed from multiple
 pairs. Newly created objects are automatically pushed to this stack.
