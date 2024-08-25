@@ -125,7 +125,7 @@ static void SetType(FeObject* o, FeType type) {
 
 struct FeContext {
   FeHandlers handlers;
-  FeObject* gcstack[GC_STACK_SIZE];
+  FeObject* gc_stack[GC_STACK_SIZE];
   size_t gc_stack_index;
   FeObject* objects;
   size_t object_count;
@@ -216,7 +216,7 @@ void FePushGC(FeContext* ctx, FeObject* obj) {
   if (ctx->gc_stack_index == GC_STACK_SIZE) {
     FeHandleError(ctx, "GC stack overflow");
   }
-  ctx->gcstack[ctx->gc_stack_index++] = obj;
+  ctx->gc_stack[ctx->gc_stack_index++] = obj;
 }
 
 void FeRestoreGC(FeContext* ctx, size_t index) {
@@ -277,7 +277,7 @@ begin:
 static void CollectGarbage(FeContext* ctx) {
   // Mark:
   for (size_t i = 0; i < ctx->gc_stack_index; i++) {
-    FeMark(ctx, ctx->gcstack[i]);
+    FeMark(ctx, ctx->gc_stack[i]);
   }
   FeMark(ctx, ctx->symbol_list);
 
@@ -999,6 +999,12 @@ FeObject* FeEvaluate(FeContext* ctx, FeObject* obj) {
 }
 
 FeContext* FeOpenContext(void* arena, size_t size) {
+  if (size < sizeof(FeContext)) {
+    fprintf(stderr, "arena size (%zu) < minimum context size (%zu); exiting\n",
+            size, sizeof(FeContext));
+    exit(1);
+  }
+
   // Initialize the context:
   FeContext* ctx = arena;
   memset(ctx, 0, sizeof(FeContext));
@@ -1028,7 +1034,7 @@ FeContext* FeOpenContext(void* arena, size_t size) {
 
   // Register the built-in primitives:
   size_t save = FeSaveGC(ctx);
-  for (size_t i = 0; i < PSentinel; i++) {
+  for (size_t i = PAssert; i < PSentinel; i++) {
     FeObject* v = MakeObject(ctx);
     SetType(v, FeTPrimitive);
     PRIM(v) = (char)i;
