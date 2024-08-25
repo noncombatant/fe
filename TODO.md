@@ -21,8 +21,6 @@ Finish adding the rest of math.h.
 
 Add (at least) `fread`, `fwrite`, `fflush`, `fseeko`, `ftello`.
 
-Add a function `(sh ...)` that does `fork` and `execlp`.
-
 Add `regcomp` (as `(compile-regex ...)`) and `regexec` (as `(match-regex ...)`).
 
 Consider namespaces, e.g. `math.*`, `io.*`, `sys.*`, et c.
