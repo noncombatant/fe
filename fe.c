@@ -15,8 +15,6 @@
 
 const char* FeVersion = "1.1";
 
-#define STRING_BUFFER_SIZE (sizeof(FeObject*) - 1)
-
 #define COUNT(a) (sizeof((a)) / sizeof((a)[0]))
 
 typedef enum Primitive {
@@ -91,12 +89,14 @@ typedef union {
 } Value;
 
 enum {
-  // Stored in bit 1 of `Value.c`:
+  // Stored in the lowest-order bit of `Value.c`:
   ConsCell = 0,
   OtherCell = 1,
+  // The 2nd-lowest-order bit of `Value.c` is the mark bit:
   GcMarkBit = 2,
   // TODO: This should scale with arena size?
   GcStackSize = 512,
+  StringBufferSize = (sizeof(FeObject*) - 1),
 };
 
 struct FeObject {
@@ -122,7 +122,7 @@ static FeNativeFn* GetNativeFn(const FeObject* o) {
   return o->cdr.f;
 }
 
-static char GetP(const FeObject* o) {
+static char GetPrimitive(const FeObject* o) {
   return o->cdr.c;
 }
 
@@ -356,7 +356,7 @@ static bool Equal(FeObject* a, FeObject* b) {
 
 static int IsStringEqual(FeObject* obj, const char* str) {
   while (!FeIsNil(obj)) {
-    for (size_t i = 0; i < STRING_BUFFER_SIZE; i++) {
+    for (size_t i = 0; i < StringBufferSize; i++) {
       if (STRING_BUFFER(obj)[i] != *str) {
         return 0;
       }
@@ -403,7 +403,7 @@ FeObject* FeMakeDouble(FeContext* ctx, FeDouble n) {
 }
 
 static FeObject* BuildString(FeContext* ctx, FeObject* tail, char chr) {
-  if (!tail || STRING_BUFFER(tail)[STRING_BUFFER_SIZE - 1] != '\0') {
+  if (!tail || STRING_BUFFER(tail)[StringBufferSize - 1] != '\0') {
     FeObject* obj = FeCons(ctx, NULL, &nil);
     SetType(obj, FeTString);
     if (tail) {
@@ -524,8 +524,7 @@ void FeWrite(FeContext* ctx, FeObject* obj, FeWriteFn fn, void* udata, int qt) {
         fn(ctx, udata, '"');
       }
       while (!FeIsNil(obj)) {
-        for (size_t i = 0; i < STRING_BUFFER_SIZE && STRING_BUFFER(obj)[i];
-             i++) {
+        for (size_t i = 0; i < StringBufferSize && STRING_BUFFER(obj)[i]; i++) {
           if (qt && STRING_BUFFER(obj)[i] == '"') {
             fn(ctx, udata, '\\');
           }
@@ -812,7 +811,7 @@ static FeObject* EvaluatePrimitive(FeContext* ctx,
   FeObject* arg = CDR(obj);
   FeObject* va;
   FeObject* vb;
-  switch (GetP(fn)) {
+  switch (GetPrimitive(fn)) {
     case PAssert:
       va = EVAL_ARG();
       if (FeIsNil(va)) {
@@ -847,7 +846,7 @@ static FeObject* EvaluatePrimitive(FeContext* ctx,
       va = FeCons(ctx, env, arg);
       FeGetNextArgument(ctx, &arg);
       res = MakeObject(ctx);
-      SetType(res, GetP(fn) == PFn ? FeTFn : FeTMacro);
+      SetType(res, GetPrimitive(fn) == PFn ? FeTFn : FeTMacro);
       CDR(res) = va;
       return res;
     case PWhile: {
