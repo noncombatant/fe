@@ -1,0 +1,46 @@
+(= id (fn (x)
+    x))
+
+(assert-is 5 (id 5))
+(assert-is (id 5) (id (+ 4 1)))
+(assert-equals '(1 2 3 4) (id '(1 2 3 4)))
+
+(= all (fn (xs predicate)
+    (if (not predicate)
+        (= predicate id))
+    (let r t)
+    (while xs
+        (if (not (predicate (car xs)))
+            (= r nil))
+        (= xs (cdr xs)))
+    r))
+
+(assert-equals '(1 2 3 4) (all '(1 2 3 4)))
+
+(= is-even (fn (x)
+    (is 0 (% x 2))))
+
+(assert (is-even 4))
+(assert (is-even 2))
+(assert (is-even 0))
+(assert-nil (is-even 3))
+(assert-nil (is-even 1))
+
+(assert (all '(2 4 6 8) is-even))
+(assert-nil (all '(2 4 6 7) is-even))
+
+(= any (fn (xs predicate)
+    (if (not predicate)
+        (= predicate id))
+    (let r nil)
+    (while xs
+        (if (predicate (car xs))
+            (= r t))
+        (= xs (cdr xs)))
+    r))
+
+(assert (any '(1 2 3 4)))
+(assert (any '(1 2 3 4) is-even))
+(assert-nil (any '(3 5 7 9) is-even))
+(assert-nil (any '(nil nil nil)))
+(assert (any '(nil nil nil 4)))
