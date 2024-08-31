@@ -51,12 +51,12 @@ typedef enum FeType {
   FeTFex0,
   FeTFex1,
   FeTFex2,
-  FeTFex3,
-  FeTFex4,
-  FeTFex5,
-  FeTFex6,
-  FeTFex7,
-  // Add more as needed.
+  // Add more as needed:
+  //   * add them here
+  //   * add cases for them in all relevant `switch`/`case` statements
+  //   * add a slot and default name for them in `type_names`
+  //   * assign your name for them in `FexInstallNativeFn`
+  // TODO: Try to find a way to do this with less toil.
 
   FeTSentinel,
 } FeType;

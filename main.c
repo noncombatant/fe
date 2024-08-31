@@ -138,6 +138,7 @@ int main(int count, char* arguments[]) {
   char* arena = malloc(arena_size);
   FeContext* context = FeOpenContext(arena, arena_size);
   if (extensions) {
+    FexInit(context);
     FexInstallIO(context);
     FexInstallMath(context);
     FexInstallProcess(context);

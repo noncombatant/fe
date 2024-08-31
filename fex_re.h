@@ -7,6 +7,7 @@
 #include "fe.h"
 
 void FexInstallRE(FeContext* ctx);
+FeObject* FexGCRE(FeContext* ctx, FeObject* o);
 
 FeObject* FexCompileRE(FeContext* ctx, FeObject* arg);
 FeObject* FexMatchRE(FeContext* ctx, FeObject* arg);

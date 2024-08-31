@@ -62,25 +62,22 @@ static const char* primitive_names[] = {
     [PAdd] = "+",         [PSub] = "-",         [PMul] = "*",
     [PDiv] = "/"};
 
-const char* type_names[] = {[FeTPair] = "pair",
-                            [FeTFree] = "free",
-                            [FeTNil] = "nil",
-                            [FeTDouble] = "double",
-                            [FeTSymbol] = "symbol",
-                            [FeTString] = "string",
-                            [FeTFn] = "fn",
-                            [FeTMacro] = "macro",
-                            [FeTPrimitive] = "primitive",
-                            [FeTNativeFn] = "native-fn",
-                            [FeTPtr] = "ptr",
-                            [FeTFex0] = "fex0",
-                            [FeTFex1] = "fex1",
-                            [FeTFex2] = "fex2",
-                            [FeTFex3] = "fex3",
-                            [FeTFex4] = "fex4",
-                            [FeTFex5] = "fex5",
-                            [FeTFex6] = "fex6",
-                            [FeTFex7] = "fex7"};
+const char* type_names[] = {
+    [FeTPair] = "pair",
+    [FeTFree] = "free",
+    [FeTNil] = "nil",
+    [FeTDouble] = "double",
+    [FeTSymbol] = "symbol",
+    [FeTString] = "string",
+    [FeTFn] = "fn",
+    [FeTMacro] = "macro",
+    [FeTPrimitive] = "primitive",
+    [FeTNativeFn] = "native-fn",
+    [FeTPtr] = "ptr",
+    [FeTFex0] = "fex0",
+    [FeTFex1] = "fex1",
+    [FeTFex2] = "fex2",
+};
 
 typedef union {
   FeObject* o;
@@ -260,11 +257,6 @@ begin:
     case FeTFex0:
     case FeTFex1:
     case FeTFex2:
-    case FeTFex3:
-    case FeTFex4:
-    case FeTFex5:
-    case FeTFex6:
-    case FeTFex7:
       if (ctx->handlers.mark) {
         ctx->handlers.mark(ctx, obj);
       }
@@ -297,7 +289,7 @@ static void CollectGarbage(FeContext* ctx) {
       continue;
     }
     if (~TAG(obj) & GcMarkBit) {
-      if (FeGetType(obj) >= FeTPtr && ctx->handlers.gc) {
+      if (ctx->handlers.gc != NULL) {
         ctx->handlers.gc(ctx, obj);
       }
       SetType(obj, FeTFree);
@@ -560,11 +552,6 @@ void FeWrite(FeContext* ctx, FeObject* obj, FeWriteFn fn, void* udata, int qt) {
     case FeTFex0:
     case FeTFex1:
     case FeTFex2:
-    case FeTFex3:
-    case FeTFex4:
-    case FeTFex5:
-    case FeTFex6:
-    case FeTFex7:
       Format(buf, sizeof(buf), "[%s]", GetTypeName(FeGetType(obj)));
       WriteString(ctx, fn, udata, buf);
       break;
@@ -1000,11 +987,6 @@ static FeObject* Evaluate(FeContext* ctx,
     case FeTFex0:
     case FeTFex1:
     case FeTFex2:
-    case FeTFex3:
-    case FeTFex4:
-    case FeTFex5:
-    case FeTFex6:
-    case FeTFex7:
       FeHandleError(ctx, "tried to call non-callable value");
 
     case FeTSentinel:

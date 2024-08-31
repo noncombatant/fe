@@ -7,12 +7,6 @@
 #include "fex.h"
 #include "fex_re.h"
 
-// int regexec(const regex_t* restrict preg,
-//             const char* restrict string,
-//             size_t nmatch,
-//             regmatch_t pmatch[restrict],
-//             int eflags);
-
 void FexInstallRE(FeContext* ctx) {
   FexInstallNativeFn(ctx, "compile-re", FexCompileRE);
   FexInstallNativeFn(ctx, "match-re", FexMatchRE);
@@ -61,4 +55,11 @@ FeObject* FexMatchRE(FeContext* ctx, FeObject* arg) {
   free(buffer);
   HANDLE_ERROR(ctx, error, re);
   return FeMakeDouble(ctx, error);
+}
+
+FeObject* FexGCRE(FeContext* ctx, FeObject* o) {
+  regex_t* re = FeToPtr(ctx, o);
+  regfree(re);
+  free(re);
+  return &nil;
 }

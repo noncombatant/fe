@@ -9,11 +9,11 @@
 extern const char* FexVersion;
 
 enum {
-  FexTError = FeTFex0,
-  FexTFile = FeTFex1,
-  FexTRE = FeTFex2,
+  FexTFile = FeTFex0,
+  FexTRE = FeTFex1,
 };
 
+void FexInit(FeContext* ctx);
 void FexInstallNativeFn(FeContext* ctx, const char* name, FeNativeFn fn);
 
 #endif
