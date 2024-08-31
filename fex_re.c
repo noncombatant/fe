@@ -58,6 +58,7 @@ FeObject* FexMatchRE(FeContext* ctx, FeObject* arg) {
 
   regmatch_t matches[16];
   const int error = regexec(re, buffer, 16, matches, 0);
+  free(buffer);
   HANDLE_ERROR(ctx, error, re);
   return FeMakeDouble(ctx, error);
 }

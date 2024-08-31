@@ -170,5 +170,6 @@ int main(int count, char* arguments[]) {
     ReadEvaluatePrint(context, stdin, gc);
   }
 
+  FeCloseContext(context);
   free(arena);
 }

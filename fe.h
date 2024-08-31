@@ -5,6 +5,7 @@
 #ifndef FE_H
 #define FE_H
 
+#include <assert.h>
 #include <stdbool.h>
 #include <stdio.h>
 #include <stdlib.h>
@@ -59,6 +60,8 @@ typedef enum FeType {
 
   FeTSentinel,
 } FeType;
+
+static_assert(FeTFex0 > FeTPtr, "FeTFex* must be > FeTPtr");
 
 extern const char* type_names[];
 

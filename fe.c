@@ -297,7 +297,7 @@ static void CollectGarbage(FeContext* ctx) {
       continue;
     }
     if (~TAG(obj) & GcMarkBit) {
-      if (FeGetType(obj) == FeTPtr && ctx->handlers.gc) {
+      if (FeGetType(obj) >= FeTPtr && ctx->handlers.gc) {
         ctx->handlers.gc(ctx, obj);
       }
       SetType(obj, FeTFree);
