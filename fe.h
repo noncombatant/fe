@@ -70,9 +70,7 @@ extern FeObject nil;
 FeContext* FeOpenContext(void* ptr, size_t size);
 void FeCloseContext(FeContext* ctx);
 FeHandlers* FeGetHandlers(FeContext* ctx);
-
 void FeHandleError(FeContext* ctx, const char* msg);
-FeObject* FeGetNextArgument(FeContext* ctx, FeObject** arg);
 
 FeType FeGetType(FeObject* obj);
 bool FeIsNil(FeObject* obj);
@@ -105,6 +103,7 @@ FeDouble FeToDouble(FeContext* ctx, FeObject* obj);
 void* FeToPtr(FeContext* ctx, FeObject* obj);
 void FeSet(FeContext* ctx, FeObject* sym, FeObject* v);
 
+FeObject* FeGetNextArgument(FeContext* ctx, FeObject** arg);
 FeObject* FeEvaluate(FeContext* ctx, FeObject* obj);
 
 #endif

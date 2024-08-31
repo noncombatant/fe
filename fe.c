@@ -734,7 +734,7 @@ FeObject* FeRead(FeContext* ctx, FeReadFn fn, void* udata) {
 }
 
 static char ReadFile(FeContext*, void* udata) {
-  int c = fgetc(udata);
+  const int c = fgetc(udata);
   return c == EOF ? '\0' : (char)c;
 }
 
@@ -760,7 +760,7 @@ static FeObject* EvaluateList(FeContext* ctx, FeObject* lst, FeObject* env) {
 
 static FeObject* DoList(FeContext* ctx, FeObject* lst, FeObject* env) {
   FeObject* res = &nil;
-  size_t save = FeSaveGC(ctx);
+  const size_t save = FeSaveGC(ctx);
   while (!FeIsNil(lst)) {
     FeRestoreGC(ctx, save);
     FePushGC(ctx, lst);
@@ -855,7 +855,7 @@ static FeObject* EvaluatePrimitive(FeContext* ctx,
       return res;
     case PWhile: {
       va = FeGetNextArgument(ctx, &arg);
-      size_t n = FeSaveGC(ctx);
+      const size_t n = FeSaveGC(ctx);
       while (!FeIsNil(Evaluate(ctx, va, env, NULL))) {
         DoList(ctx, arg, env);
         FeRestoreGC(ctx, n);
@@ -945,7 +945,7 @@ static FeObject* Evaluate(FeContext* ctx,
   CDR(&cl) = ctx->call_list;
   ctx->call_list = &cl;
 
-  size_t gc = FeSaveGC(ctx);
+  const size_t gc = FeSaveGC(ctx);
   FeObject* fn = Evaluate(ctx, CAR(obj), env, NULL);
   FeObject* arg = CDR(obj);
   FeObject* res = &nil;
@@ -1038,7 +1038,7 @@ FeContext* FeOpenContext(void* arena, size_t size) {
   FeSet(ctx, ctx->t, ctx->t);
 
   // Register the built-in primitives:
-  size_t save = FeSaveGC(ctx);
+  const size_t save = FeSaveGC(ctx);
   for (Primitive i = PAssert; i < PSentinel; i++) {
     FeObject* v = MakeObject(ctx);
     SetType(v, FeTPrimitive);
