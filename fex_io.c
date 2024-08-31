@@ -25,8 +25,7 @@ void FexInstallIO(FeContext* ctx) {
 
 static FeObject* GetFile(FeContext* ctx, FeObject** arg) {
   FeObject* file = FeGetNextArgument(ctx, arg);
-  const FeType type = FeGetType(file);
-  if (type != FexTFile) {
+  if (FeGetType(file) != FexTFile) {
     FeHandleError(ctx, "not a file");
   }
   return file;

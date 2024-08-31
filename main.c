@@ -17,6 +17,7 @@
 #include "fex_io.h"
 #include "fex_math.h"
 #include "fex_process.h"
+#include "fex_re.h"
 
 static const char* InterpreterVersion = "1.0";
 
@@ -140,6 +141,7 @@ int main(int count, char* arguments[]) {
     FexInstallIO(context);
     FexInstallMath(context);
     FexInstallProcess(context);
+    FexInstallRE(context);
   }
   if (debugging) {
     FeGetHandlers(context)->mark = HandleMark;
