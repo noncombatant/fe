@@ -11,6 +11,7 @@ void FexInstallIO(FeContext* ctx);
 FeObject* FexCloseFile(FeContext* ctx, FeObject* arg);
 FeObject* FexOpenFile(FeContext* ctx, FeObject* arg);
 FeObject* FexReadFile(FeContext* ctx, FeObject* arg);
+FeObject* FexRemoveFile(FeContext* ctx, FeObject* arg);
 FeObject* FexWriteFile(FeContext* ctx, FeObject* arg);
 
 #endif
