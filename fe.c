@@ -4,6 +4,7 @@
 
 #include <assert.h>
 #include <float.h>
+#include <inttypes.h>
 #include <limits.h>
 #include <math.h>
 #include <stdarg.h>
@@ -486,10 +487,16 @@ void FeWrite(FeContext* ctx, FeObject* obj, FeWriteFn fn, void* udata, int qt) {
       WriteString(ctx, fn, udata, "nil");
       break;
 
-    case FeTDouble:
-      Format(buf, sizeof(buf), "%.7g", GetDouble(obj));
+    case FeTDouble: {
+      const double d = GetDouble(obj);
+      if (floor(d) == d) {
+        Format(buf, sizeof(buf), "%" PRId64, (int64_t)d);
+      } else {
+        Format(buf, sizeof(buf), "%.7g", GetDouble(obj));
+      }
       WriteString(ctx, fn, udata, buf);
       break;
+    }
 
     case FeTPair:
       fn(ctx, udata, '(');
