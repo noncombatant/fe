@@ -211,6 +211,10 @@ fe > (cdr p)
 4
 ```
 
+#### `(env)`
+
+Returns a list of all symbols in the current environment.
+
 #### `(setcar pair value)`
 
 Sets the first element of `pair` to `value`.

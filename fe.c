@@ -19,6 +19,7 @@ const char* FeVersion = "1.1";
 
 typedef enum Primitive {
   PAssert,
+  PEnv,
   PLet,
   PSet,
   PIf,
@@ -50,15 +51,16 @@ typedef enum Primitive {
 } Primitive;
 
 static const char* primitive_names[] = {
-    [PAssert] = "assert", [PLet] = "let",      [PSet] = "=",
-    [PIf] = "if",         [PFn] = "fn",        [PMacro] = "macro",
-    [PWhile] = "while",   [PQuote] = "quote",  [PAnd] = "and",
-    [POr] = "or",         [PDo] = "do",        [PCons] = "cons",
-    [PCar] = "car",       [PCdr] = "cdr",      [PSetCar] = "setcar",
-    [PSetCdr] = "setcdr", [PList] = "list",    [PNot] = "not",
-    [PIs] = "is",         [PAtom] = "atom",    [PPrint] = "print",
-    [PLess] = "<",        [PLessEqual] = "<=", [PAdd] = "+",
-    [PSub] = "-",         [PMul] = "*",        [PDiv] = "/"};
+    [PAssert] = "assert", [PEnv] = "env",       [PLet] = "let",
+    [PSet] = "=",         [PIf] = "if",         [PFn] = "fn",
+    [PMacro] = "macro",   [PWhile] = "while",   [PQuote] = "quote",
+    [PAnd] = "and",       [POr] = "or",         [PDo] = "do",
+    [PCons] = "cons",     [PCar] = "car",       [PCdr] = "cdr",
+    [PSetCar] = "setcar", [PSetCdr] = "setcdr", [PList] = "list",
+    [PNot] = "not",       [PIs] = "is",         [PAtom] = "atom",
+    [PPrint] = "print",   [PLess] = "<",        [PLessEqual] = "<=",
+    [PAdd] = "+",         [PSub] = "-",         [PMul] = "*",
+    [PDiv] = "/"};
 
 const char* type_names[] = {[FeTPair] = "pair",
                             [FeTFree] = "free",
@@ -818,6 +820,8 @@ static FeObject* EvaluatePrimitive(FeContext* ctx,
         FeHandleError(ctx, "assertion failure");
       }
       return res;
+    case PEnv:
+      return ctx->symbol_list;
     case PLet:
       va = CheckType(ctx, FeGetNextArgument(ctx, &arg), FeTSymbol);
       if (newenv) {

@@ -11,7 +11,7 @@ historical flair.
 
 Unit test all fe functions.
 
-When available, use `constexpr` instead of `#define`. Until then, use `enum`.
+When available, use `constexpr` instead of `enum`.
 
 Use `readline` in main?
 
@@ -19,7 +19,7 @@ Reduce/eliminate C macros — replace the remaining lvalue accessors with `Set*
 
 Finish adding the rest of math.h.
 
-Add (at least) `fread`, `fwrite`, `fflush`, `fseeko`, `ftello`.
+Add (at least) `fflush`, `fseeko`, `ftello`, `remove-file` (`remove`).
 
 Add `regcomp` (as `(compile-regex ...)`) and `regexec` (as `(match-regex ...)`).
 

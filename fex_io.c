@@ -16,6 +16,11 @@ void FexInstallIO(FeContext* ctx) {
   FexInstallNativeFn(ctx, "close-file", FexCloseFile);
   FexInstallNativeFn(ctx, "open-file", FexOpenFile);
   FexInstallNativeFn(ctx, "read-file", FexReadFile);
+  FexInstallNativeFn(ctx, "write-file", FexWriteFile);
+
+  FeSet(ctx, FeMakeSymbol(ctx, "stdin"), FeMakePtr(ctx, FexTFile, stdin));
+  FeSet(ctx, FeMakeSymbol(ctx, "stdout"), FeMakePtr(ctx, FexTFile, stdout));
+  FeSet(ctx, FeMakeSymbol(ctx, "stderr"), FeMakePtr(ctx, FexTFile, stderr));
 }
 
 static FeObject* GetFile(FeContext* ctx, FeObject** arg) {
@@ -55,8 +60,21 @@ FeObject* FexReadFile(FeContext* ctx, FeObject* arg) {
 
   char* record = NULL;
   size_t capacity = 0;
+  // TODO: error checking!
   (void)getdelim(&record, &capacity, delimiter[0], FeToPtr(ctx, file));
   FeObject* result = FeMakeString(ctx, record);
   free(record);
   return result;
+}
+
+FeObject* FexWriteFile(FeContext* ctx, FeObject* arg) {
+  FeObject* file = GetFile(ctx, &arg);
+  const size_t arbitrary_limit = 4 * 1024 * 1024;  // TODO
+  char* buffer = malloc(arbitrary_limit);
+  const size_t size =
+      FeToString(ctx, FeGetNextArgument(ctx, &arg), buffer, arbitrary_limit);
+  // TODO: error checking!
+  const size_t written = fwrite(buffer, 1, size, FeToPtr(ctx, file));
+  free(buffer);
+  return FeMakeDouble(ctx, (double)written);
 }
