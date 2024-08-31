@@ -3,6 +3,7 @@
 
 #include <regex.h>
 #include <stdlib.h>
+#include <string.h>
 
 #include "fex.h"
 #include "fex_re.h"
@@ -17,6 +18,7 @@ void FexInstallRE(FeContext* ctx) {
 enum {
   ArbitraryRELengthLimit = 4096,
   ArbitraryDataLengthLimit = 4 * 1024 * 1024,
+  ArbitraryMatchCount = 16,
 };
 
 static FeObject* BuildError(FeContext* ctx, int error, regex_t* re) {
@@ -37,6 +39,23 @@ FeObject* FexCompileRE(FeContext* ctx, FeObject* arg) {
   return error == 0 ? FeMakePtr(ctx, FexTRE, re) : BuildError(ctx, error, re);
 }
 
+static FeObject* BuildMatchResult(FeContext* ctx,
+                                  char* buffer,
+                                  regmatch_t* matches) {
+  FeObject* substrings[ArbitraryMatchCount] = {NULL};
+  size_t count;
+  for (count = 0; count < ArbitraryMatchCount; count++) {
+    const regmatch_t m = matches[count];
+    if (m.rm_so == -1 || m.rm_eo == -1) {
+      break;
+    }
+    char* s = strndup(buffer + m.rm_so, (size_t)(m.rm_eo - m.rm_so));
+    substrings[count] = FeMakeString(ctx, s);
+    free(s);
+  }
+  return FeMakeList(ctx, substrings, count);
+}
+
 FeObject* FexMatchRE(FeContext* ctx, FeObject* arg) {
   FeObject* o = FeGetNextArgument(ctx, &arg);
   if (FeGetType(o) != FexTRE) {
@@ -44,14 +63,16 @@ FeObject* FexMatchRE(FeContext* ctx, FeObject* arg) {
   }
   regex_t* re = FeToPtr(ctx, o);
 
-  const size_t buffer_size = 4 * 1024 * 1024;
-  char* buffer = malloc(buffer_size);
-  (void)FeToString(ctx, FeGetNextArgument(ctx, &arg), buffer, buffer_size);
+  char* buffer = calloc(1, ArbitraryDataLengthLimit);
+  (void)FeToString(ctx, FeGetNextArgument(ctx, &arg), buffer,
+                   ArbitraryDataLengthLimit);
 
-  regmatch_t matches[16];
-  const int error = regexec(re, buffer, 16, matches, 0);
+  regmatch_t matches[ArbitraryMatchCount];
+  const int error = regexec(re, buffer, ArbitraryMatchCount, matches, 0);
+  FeObject* result = error == 0 ? BuildMatchResult(ctx, buffer, matches)
+                                : BuildError(ctx, error, re);
   free(buffer);
-  return error == 0 ? FeMakeDouble(ctx, error) : BuildError(ctx, error, re);
+  return result;
 }
 
 FeObject* FexGCRE(FeContext* ctx, FeObject* o) {
