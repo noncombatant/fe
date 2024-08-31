@@ -344,8 +344,7 @@ static bool Equal(FeObject* a, FeObject* b) {
   }
   if (FeGetType(a) == FeTDouble) {
     return IsNearlyEqual(GetDouble(a), GetDouble(b), DBL_EPSILON);
-  }
-  if (FeGetType(a) == FeTString) {
+  } else if (FeGetType(a) == FeTString) {
     for (; !FeIsNil(a); a = CDR(a), b = CDR(b)) {
       if (CAR(a) != CAR(b)) {
         return false;
@@ -540,6 +539,11 @@ void FeWrite(FeContext* ctx, FeObject* obj, FeWriteFn fn, void* udata, int qt) {
       break;
 
     case FeTFn:
+      // TODO: Write a pretty-printer, and use it here and elsewhere.
+      FeWrite(ctx, FeCons(ctx, FeMakeSymbol(ctx, "fn"), CDR(CDR(obj))), fn,
+              udata, qt);
+      break;
+
     case FeTMacro:
     case FeTPrimitive:
     case FeTNativeFn:
