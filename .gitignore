@@ -1,3 +1,4 @@
 fe
 *.o
 *.dSYM
+.vscode
