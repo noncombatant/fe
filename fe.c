@@ -539,7 +539,6 @@ void FeWrite(FeContext* ctx, FeObject* obj, FeWriteFn fn, void* udata, int qt) {
       }
       break;
 
-    case FeTFree:
     case FeTFn:
     case FeTMacro:
     case FeTPrimitive:
@@ -553,17 +552,18 @@ void FeWrite(FeContext* ctx, FeObject* obj, FeWriteFn fn, void* udata, int qt) {
     case FeTFex5:
     case FeTFex6:
     case FeTFex7:
-      Format(buf, sizeof(buf), "[%s %p]", GetTypeName(FeGetType(obj)),
-             (void*)obj);
+      Format(buf, sizeof(buf), "[%s]", GetTypeName(FeGetType(obj)));
       WriteString(ctx, fn, udata, buf);
       break;
 
+    case FeTFree:
     case FeTSentinel:
       abort();
   }
 }
 
-// TODO: See if `void*` is really necessary here, in `WriteBuffer`, et c.
+// TODO: See if `void*` is really necessary here, in `WriteBuffer`, et c., or if
+// we can use real types.
 static void WriteFile(FeContext*, void* udata, char chr) {
   fputc(chr, udata);
 }
