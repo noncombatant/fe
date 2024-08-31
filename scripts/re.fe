@@ -1,0 +1,4 @@
+(= re (compile-re "goats?"))
+
+(assert-is 0 (match-re re "hello, goats"))
+(assert-is 0 (match-re re "hello, goat"))
