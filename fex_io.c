@@ -7,17 +7,9 @@
 #include <math.h>
 #include <stdint.h>
 #include <stdio.h>
-#include <string.h>
 
 #include "fex.h"
 #include "fex_io.h"
-
-static FeObject* BuildError(FeContext* ctx, int error) {
-  return FeMakeList(ctx,
-                    (FeObject*[]){FeMakeDouble(ctx, (double)error),
-                                  FeMakeString(ctx, strerror(error))},
-                    2);
-}
 
 static FeObject* GetFile(FeContext* ctx, FeObject** arg) {
   FeObject* file = FeGetNextArgument(ctx, arg);
@@ -40,8 +32,9 @@ void FexInstallIO(FeContext* ctx) {
 }
 
 FeObject* FexCloseFile(FeContext* ctx, FeObject* arg) {
-  return fclose(FeToPtr(ctx, GetFile(ctx, &arg))) == 0 ? &nil
-                                                       : BuildError(ctx, errno);
+  return fclose(FeToPtr(ctx, GetFile(ctx, &arg))) == 0
+             ? &nil
+             : BuildErrnoError(ctx, errno);
 }
 
 FeObject* FexOpenFile(FeContext* ctx, FeObject* arg) {
@@ -51,7 +44,8 @@ FeObject* FexOpenFile(FeContext* ctx, FeObject* arg) {
   char mode[8];
   (void)FeToString(ctx, FeGetNextArgument(ctx, &arg), mode, sizeof(mode));
   FILE* file = fopen(pathname, mode);
-  return file != NULL ? FeMakePtr(ctx, FexTFile, file) : BuildError(ctx, errno);
+  return file != NULL ? FeMakePtr(ctx, FexTFile, file)
+                      : BuildErrnoError(ctx, errno);
 }
 
 FeObject* FexReadFile(FeContext* ctx, FeObject* arg) {
@@ -65,7 +59,7 @@ FeObject* FexReadFile(FeContext* ctx, FeObject* arg) {
   const ssize_t r =
       getdelim(&record, &capacity, delimiter[0], FeToPtr(ctx, file));
   FeObject* result =
-      r >= 0 ? FeMakeString(ctx, record) : BuildError(ctx, errno);
+      r >= 0 ? FeMakeString(ctx, record) : BuildErrnoError(ctx, errno);
   free(record);
   return result;
 }
@@ -74,7 +68,7 @@ FeObject* FexRemoveFile(FeContext* ctx, FeObject* arg) {
   char pathname[PATH_MAX + 1];
   (void)FeToString(ctx, FeGetNextArgument(ctx, &arg), pathname,
                    sizeof(pathname));
-  return remove(pathname) == 0 ? &nil : BuildError(ctx, errno);
+  return remove(pathname) == 0 ? &nil : BuildErrnoError(ctx, errno);
 }
 
 FeObject* FexWriteFile(FeContext* ctx, FeObject* arg) {
@@ -85,7 +79,7 @@ FeObject* FexWriteFile(FeContext* ctx, FeObject* arg) {
       FeToString(ctx, FeGetNextArgument(ctx, &arg), buffer, arbitrary_limit);
   const size_t written = fwrite(buffer, 1, size, FeToPtr(ctx, file));
   FeObject* result = written == size ? FeMakeDouble(ctx, (double)written)
-                                     : BuildError(ctx, errno);
+                                     : BuildErrnoError(ctx, errno);
   free(buffer);
   return result;
 }

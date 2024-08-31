@@ -2,6 +2,7 @@
 // SPDX-License-Identifier: MIT
 
 #include <stdlib.h>
+#include <string.h>
 
 #include "fex.h"
 #include "fex_re.h"
@@ -35,6 +36,13 @@ void FexInit(FeContext* ctx) {
   type_names[FexTFile] = "file";
   type_names[FexTRE] = "regular-expression";
   FeGetHandlers(ctx)->gc = FexGC;
+}
+
+FeObject* BuildErrnoError(FeContext* ctx, int error) {
+  return FeMakeList(ctx,
+                    (FeObject*[]){FeMakeDouble(ctx, (double)error),
+                                  FeMakeString(ctx, strerror(error))},
+                    2);
 }
 
 void FexInstallNativeFn(FeContext* ctx, const char* name, FeNativeFn fn) {
