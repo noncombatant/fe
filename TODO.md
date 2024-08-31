@@ -33,3 +33,7 @@ Help strings for symbols.
 Use bitfields instead of shifts and ors and so on.
 
 Ensure that everything declared in fe.h really needs to be public.
+
+Functions add their arguments to the global environment, but they should be
+creating their own and destorying it upon return. Similarly, just naming a
+non-existent variable creates it in the global env, but should not.
