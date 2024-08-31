@@ -8,7 +8,8 @@ CFLAGS = -Weverything -Werror -std=c2x -lm \
 	-Wno-unsafe-buffer-usage \
 	-Wno-implicit-fallthrough \
 	-Wno-unused-command-line-argument \
-	-Wno-unknown-warning-option
+	-Wno-unknown-warning-option \
+	-Wno-extra-semi-stmt
 
 ifdef RELEASE
 	CFLAGS += -O3 -fsanitize=undefined -fsanitize-trap=all
