@@ -29,6 +29,11 @@ bench: clean
 fe: main.c fe.o fex.o fex_io.o fex_math.o fex_process.o fex_re.o
 	$(CC) $(CFLAGS) -o $@ $^
 
+sizes:
+	wc *.[ch]
+	wc *.md doc/*.md
+	wc scripts/*.fe
+
 clean:
 	-rm -rf fe *.o *.dSYM
 	-rm -f scripts/*.csv scripts/*.times
