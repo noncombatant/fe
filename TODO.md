@@ -37,6 +37,3 @@ Ensure that everything declared in fe.h really needs to be public.
 Functions add their arguments to the global environment, but they should be
 creating their own and destorying it upon return. Similarly, just naming a
 non-existent variable creates it in the global env, but should not.
-
-Handle errors in fex_io the same as in fex_re: return lists that describe the
-object.
