@@ -545,8 +545,17 @@ void FeWrite(FeContext* ctx, FeObject* obj, FeWriteFn fn, void* udata, int qt) {
       break;
 
     case FeTMacro:
+      // TODO: Write a pretty-printer, and use it here and elsewhere.
+      FeWrite(ctx, FeCons(ctx, FeMakeSymbol(ctx, "macro"), CDR(CDR(obj))), fn,
+              udata, qt);
+      break;
+
     case FeTPrimitive:
     case FeTNativeFn:
+      Format(buf, sizeof(buf), "[%s]", GetTypeName(FeGetType(obj)));
+      WriteString(ctx, fn, udata, buf);
+      break;
+
     case FeTPtr:
     case FeTFex0:
     case FeTFex1:
