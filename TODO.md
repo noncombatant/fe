@@ -4,8 +4,6 @@ Declarations at first use throughout.
 
 More example programs and tests.
 
-Use `//` comments.
-
 Replace `car` and `cdr` with `head` and `tail`, but keep `car`/`cdr` for
 historical flair.
 
@@ -17,7 +15,7 @@ Use `readline` in main?
 
 Reduce/eliminate C macros — replace the remaining lvalue accessors with `Set*`?
 
-Finish adding the rest of math.h.
+Use GMP for numbers, and expose all of libgmp.
 
 Add (at least) `fflush`, `fseeko`, `ftello`, `remove-file` (`remove`).
 
@@ -31,8 +29,6 @@ Turn the examples in the docs into scripts, and test them, and then refer to
 them in the docs in place of the code.
 
 Help strings for symbols.
-
-Add GMP to Fex (or core Fe?) for better numbers.
 
 Use bitfields instead of shifts and ors and so on.
 
