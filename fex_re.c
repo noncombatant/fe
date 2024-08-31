@@ -25,11 +25,14 @@ enum {
   ArbitraryDataLengthLimit = 4 * 1024 * 1024,
 };
 
-#define HANDLE_ERROR(ctx, error, re)                         \
-  if ((error) != 0) {                                        \
-    char message[1024];                                      \
-    (void)regerror((error), (re), message, sizeof(message)); \
-    return FeMakeString((ctx), message);                     \
+#define HANDLE_ERROR(ctx, error, re)                               \
+  if ((error) != 0) {                                              \
+    char message[1024];                                            \
+    (void)regerror((error), (re), message, sizeof(message));       \
+    return FeMakeList(ctx,                                         \
+                      (FeObject*[]){FeMakeDouble(ctx, (error)),    \
+                                    FeMakeString((ctx), message)}, \
+                      2);                                          \
   }
 
 FeObject* FexCompileRE(FeContext* ctx, FeObject* arg) {
