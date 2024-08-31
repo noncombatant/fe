@@ -19,24 +19,22 @@ enum {
   ArbitraryDataLengthLimit = 4 * 1024 * 1024,
 };
 
-#define HANDLE_ERROR(ctx, error, re)                               \
-  if ((error) != 0) {                                              \
-    char message[1024];                                            \
-    (void)regerror((error), (re), message, sizeof(message));       \
-    return FeMakeList(ctx,                                         \
-                      (FeObject*[]){FeMakeDouble(ctx, (error)),    \
-                                    FeMakeString((ctx), message)}, \
-                      2);                                          \
-  }
+static FeObject* BuildError(FeContext* ctx, int error, regex_t* re) {
+  char message[1024];
+  (void)regerror((error), (re), message, sizeof(message));
+  return FeMakeList(
+      ctx,
+      (FeObject*[]){FeMakeDouble(ctx, (error)), FeMakeString((ctx), message)},
+      2);
+}
 
 FeObject* FexCompileRE(FeContext* ctx, FeObject* arg) {
   char pattern[ArbitraryRELengthLimit + 1];
   (void)FeToString(ctx, FeGetNextArgument(ctx, &arg), pattern, sizeof(pattern));
 
-  regex_t* re = calloc(1, sizeof(regex_t));  // TODO: Don't leak this
+  regex_t* re = calloc(1, sizeof(regex_t));
   const int error = regcomp(re, pattern, REG_EXTENDED);
-  HANDLE_ERROR(ctx, error, re);
-  return FeMakePtr(ctx, FexTRE, re);
+  return error == 0 ? FeMakePtr(ctx, FexTRE, re) : BuildError(ctx, error, re);
 }
 
 FeObject* FexMatchRE(FeContext* ctx, FeObject* arg) {
@@ -53,8 +51,7 @@ FeObject* FexMatchRE(FeContext* ctx, FeObject* arg) {
   regmatch_t matches[16];
   const int error = regexec(re, buffer, 16, matches, 0);
   free(buffer);
-  HANDLE_ERROR(ctx, error, re);
-  return FeMakeDouble(ctx, error);
+  return error == 0 ? FeMakeDouble(ctx, error) : BuildError(ctx, error, re);
 }
 
 FeObject* FexGCRE(FeContext* ctx, FeObject* o) {
