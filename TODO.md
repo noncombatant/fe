@@ -31,3 +31,5 @@ creating their own and destorying it upon return. Similarly, just naming a
 non-existent variable creates it in the global env, but should not.
 
 Add time functions.
+
+Implement `($ ...)`, like sh’s `$(...)`.

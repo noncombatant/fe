@@ -39,5 +39,4 @@ if [[ $failed -eq 0 ]]; then
 else
     echo "❌ $failed tests failed"
 fi
-
 exit "$failed"

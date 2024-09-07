@@ -44,3 +44,5 @@
 (assert-nil (any '(3 5 7 9) is-even))
 (assert-nil (any '(nil nil nil)))
 (assert (any '(nil nil nil 4)))
+
+;; TODO: filter, map
