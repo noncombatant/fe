@@ -12,6 +12,7 @@
 #include <string.h>
 #include <unistd.h>
 
+#include "auto.h"
 #include "fe.h"
 #include "fex.h"
 #include "fex_io.h"
@@ -136,8 +137,9 @@ int main(int count, char* arguments[]) {
   interactive = interactive || count == 0;
 
   // Initialize the context:
-  char* arena = malloc(arena_size);
-  FeContext* context = FeOpenContext(arena, arena_size);
+  AUTO(char*, arena, malloc(arena_size), FreeChar);
+  AUTO(FeContext*, context, FeOpenContext(arena, arena_size),
+       FeCloseContextAuto);
   if (extensions) {
     FexInit(context);
     FexInstallIO(context);
@@ -159,20 +161,15 @@ int main(int count, char* arguments[]) {
   size_t gc = FeSaveGC(context);
   for (int i = 0; i < count; i++) {
     char* a = arguments[i];
-    FILE* input =
-        program_literal ? fmemopen(a, strlen(a), "rb") : fopen(a, "rb");
+    AUTO(FILE*, input,
+         program_literal ? fmemopen(a, strlen(a), "rb") : fopen(a, "rb"),
+         CloseFile);
     if (!input) {
       FeHandleError(context, "could not open input file");
     }
     gc = ReadEvaluatePrint(context, input, gc);
-    if (fclose(input)) {
-      perror("could not close input");
-    }
   }
   if (interactive) {
     ReadEvaluatePrint(context, stdin, gc);
   }
-
-  FeCloseContext(context);
-  free(arena);
 }

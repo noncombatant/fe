@@ -26,7 +26,7 @@ run: fe
 bench: clean
 	./bench.sh
 
-fe: main.c fe.o fex.o fex_io.o fex_math.o fex_process.o fex_re.o fex_time.o
+fe: main.c auto.o fe.o fex.o fex_io.o fex_math.o fex_process.o fex_re.o fex_time.o
 	$(CC) $(CFLAGS) -o $@ $^
 
 sizes:

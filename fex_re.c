@@ -5,6 +5,7 @@
 #include <stdlib.h>
 #include <string.h>
 
+#include "auto.h"
 #include "fex.h"
 #include "fex_re.h"
 
@@ -49,9 +50,9 @@ static FeObject* BuildMatchResult(FeContext* ctx,
     if (m.rm_so == -1 || m.rm_eo == -1) {
       break;
     }
-    char* s = strndup(buffer + m.rm_so, (size_t)(m.rm_eo - m.rm_so));
+    AUTO(char*, s, strndup(buffer + m.rm_so, (size_t)(m.rm_eo - m.rm_so)),
+         FreeChar);
     substrings[count] = FeMakeString(ctx, s);
-    free(s);
   }
   return FeMakeList(ctx, substrings, count);
 }
@@ -63,7 +64,7 @@ FeObject* FexMatchRE(FeContext* ctx, FeObject* arg) {
   }
   regex_t* re = FeToPtr(ctx, o);
 
-  char* buffer = calloc(1, ArbitraryDataLengthLimit);
+  AUTO(char*, buffer, calloc(1, ArbitraryDataLengthLimit), FreeChar);
   (void)FeToString(ctx, FeGetNextArgument(ctx, &arg), buffer,
                    ArbitraryDataLengthLimit);
 
@@ -71,7 +72,6 @@ FeObject* FexMatchRE(FeContext* ctx, FeObject* arg) {
   const int error = regexec(re, buffer, ArbitraryMatchCount, matches, 0);
   FeObject* result = error == 0 ? BuildMatchResult(ctx, buffer, matches)
                                 : BuildError(ctx, error, re);
-  free(buffer);
   return result;
 }
 

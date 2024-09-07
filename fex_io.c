@@ -8,6 +8,7 @@
 #include <stdint.h>
 #include <stdio.h>
 
+#include "auto.h"
 #include "fex.h"
 #include "fex_io.h"
 
@@ -54,13 +55,12 @@ FeObject* FexReadFile(FeContext* ctx, FeObject* arg) {
   (void)FeToString(ctx, FeGetNextArgument(ctx, &arg), delimiter,
                    sizeof(delimiter));
 
-  char* record = NULL;
+  AUTO(char*, record, NULL, FreeChar);
   size_t capacity = 0;
   const ssize_t r =
       getdelim(&record, &capacity, delimiter[0], FeToPtr(ctx, file));
   FeObject* result =
       r >= 0 ? FeMakeString(ctx, record) : BuildErrnoError(ctx, errno);
-  free(record);
   return result;
 }
 
@@ -74,12 +74,11 @@ FeObject* FexRemoveFile(FeContext* ctx, FeObject* arg) {
 FeObject* FexWriteFile(FeContext* ctx, FeObject* arg) {
   FeObject* file = GetFile(ctx, &arg);
   const size_t arbitrary_limit = 4 * 1024 * 1024;  // TODO
-  char* buffer = malloc(arbitrary_limit);
+  AUTO(char*, buffer, malloc(arbitrary_limit), FreeChar);
   const size_t size =
       FeToString(ctx, FeGetNextArgument(ctx, &arg), buffer, arbitrary_limit);
   const size_t written = fwrite(buffer, 1, size, FeToPtr(ctx, file));
   FeObject* result = written == size ? FeMakeDouble(ctx, (double)written)
                                      : BuildErrnoError(ctx, errno);
-  free(buffer);
   return result;
 }
