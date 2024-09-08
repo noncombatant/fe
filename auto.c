@@ -18,6 +18,6 @@ void FreeChar(char** p) {
   free(*p);
 }
 
-void FeCloseContextAuto(FeContext** c) {
+void CloseContext(FeContext** c) {
   FeCloseContext(*c);
 }

@@ -21,6 +21,6 @@
 
 void CloseFile(FILE** f);
 void FreeChar(char** p);
-void FeCloseContextAuto(FeContext** c);
+void CloseContext(FeContext** c);
 
 #endif

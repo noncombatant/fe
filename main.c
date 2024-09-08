@@ -138,8 +138,7 @@ int main(int count, char* arguments[]) {
 
   // Initialize the context:
   AUTO(char*, arena, malloc(arena_size), FreeChar);
-  AUTO(FeContext*, context, FeOpenContext(arena, arena_size),
-       FeCloseContextAuto);
+  AUTO(FeContext*, context, FeOpenContext(arena, arena_size), CloseContext);
   if (extensions) {
     FexInit(context);
     FexInstallIO(context);
